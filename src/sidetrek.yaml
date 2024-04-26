@@ -1,0 +1,30 @@
+python:
+  version: "3.10.0"
+stack:
+  dagster:
+    init: "dagster scaffold"
+    uiPort: 3000
+  meltano:
+    init: "meltano init"
+  dbt:
+    init: "dbt init"
+  minio:
+    uiPort: 9000
+  iceberg:
+  trino:
+  superset:
+dependencies:
+  - dagster:
+      version: "^1.6.3"
+  - dagster-webserver:
+      version: "^1.6.3"
+  - dagster-meltano:
+      version: "^1.5.3"
+  - dagster-dbt:
+      version: "^0.22.3"
+  - meltano:
+      version: "2.19.1"
+  - dbt-trino:
+      version: "^1.7.1"
+  - trino:
+      version: "^0.327.0"
