@@ -9,14 +9,14 @@
 - deploy
 
 ## Iceberg stack
-- Create sidetrek.yaml
 - Initialize the project
   - `poetry new`
-- Initialize tools
-  - dagster, dbt, meltano
+  - Build project Dockerfile
+- Set up each tool separately (dagster, dbt, meltano, minio, iceberg, trino, superset)
+  - Initialize the project
+  - Create a separate docker-compose file
+  - Update Dockerfile
 - Connect the tools
   - Add code for tool connections
-- Build Dockerfile
-- Build docker-compose.sidetrek.yml
 - Add example code
 

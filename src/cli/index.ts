@@ -1,27 +1,28 @@
-import * as p from '@clack/prompts'
+import * as R from 'ramda'
+import { Command } from 'commander'
+import { colors } from './constants'
+import init from './commands/init'
 
-const group = await p.group(
-  {
-    name: () => p.text({ message: 'What is your name?' }),
-    age: () => p.text({ message: 'What is your age?' }),
-    color: ({ results }) =>
-      p.multiselect({
-        message: `What is your favorite color ${results.name}?`,
-        options: [
-          { value: 'red', label: 'Red' },
-          { value: 'green', label: 'Green' },
-          { value: 'blue', label: 'Blue' },
-        ],
-      }),
-  },
-  {
-    // On Cancel callback that wraps the group
-    // So if the user cancels one of the prompts in the group this function will be called
-    onCancel: ({ results }) => {
-      p.cancel('Operation cancelled.')
-      process.exit(0)
-    },
-  }
-)
+const program = new Command()
 
-console.log(group.name, group.age, group.color)
+export default async function runCli() {
+  program
+    .version('0.1.0')
+    .description(
+      `${colors.sidetrekPink('Sidetrek')} is the ${colors.sidetrekYellow(
+        'fastest'
+      )} way to build a ${colors.sidetrekPurple('modern data stack')}.`
+    )
+  // .option('-l, --ls  [value]', 'List directory contents')
+  // .option('-m, --mkdir <value>', 'Create a directory')
+  // .option('-t, --touch <value>', 'Create a file')
+
+  const initCommand = program
+    .command('init')
+    .description('Initialize your project')
+    .action((args, options) => {
+      init()
+    })
+
+  program.parse(process.argv)
+}
