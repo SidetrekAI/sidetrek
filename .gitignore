@@ -176,3 +176,4 @@ dist
 
 # Bun build temp files
 *.bun-build
+.build/
