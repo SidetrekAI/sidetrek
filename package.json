@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "bun run index.ts",
-    "dev": "bun build ./index.ts --compile --outfile ./build/sidetrek --watch",
-    "build": "bun build ./index.ts --compile --outfile ./build/sidetrek",
-    "release": "npm version patch && bun build ./index.ts --compile --minify --sourcemap --outfile ./release/sidetrek"
+    "dev": "bun build ./index.ts --compile --sourcemap --outfile ./build/sidetrek --watch && rm -rf ./*.bun-build",
+    "build": "bun build ./index.ts --compile --sourcemap --outfile ./build/sidetrek",
+    "release": "bun run ./src/scripts/release.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.1.0",
