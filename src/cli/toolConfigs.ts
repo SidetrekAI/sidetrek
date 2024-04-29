@@ -7,8 +7,11 @@ import {
   AWS_ACCESS_KEY_ID_ENVNAME,
   AWS_REGION_ENVNAME,
   AWS_SECRET_ACCESS_KEY_ENVNAME,
+  DAGSTER_DBT_VERSION,
   DAGSTER_HOST_PORT,
+  DAGSTER_MELTANO_VERSION,
   DAGSTER_VERSION,
+  DBT_CORE_VERSION,
   DBT_TRINO_VERSION,
   ICEBERG_PG_CATALOG_DB_ENVNAME,
   ICEBERG_PG_CATALOG_PASSWORD_ENVNAME,
@@ -113,7 +116,7 @@ export const getDbtConfig = (projectName: string): ToolConfig => {
     desc: 'An open source data transformation tool.',
     version: '0.21.0',
     install: async () => {
-      return await execShell(`cd ${projectName} && poetry add dbt-trino@${DBT_TRINO_VERSION}`)
+      return await execShell(`cd ${projectName} && poetry add dbt-core@${DBT_CORE_VERSION} dbt-trino@${DBT_TRINO_VERSION}`)
     },
     init: async () => {
       return await execShell(`cd ${projectName} && mkdir dbt && cd dbt && poetry run dbt init --skip-profile-setup ${projectName}`)
@@ -427,5 +430,40 @@ export const getSupersetConfig = (projectName: string): ToolConfig => {
     name: 'Superset',
     desc: 'An open-source data exploration and visualization platform.',
     dockerComposeObj,
+  }
+}
+
+// dagster-meltano connector
+export const getDagsterMeltanoConfig = (projectName: string): ToolConfig => {
+  return {
+    id: 'dagster-meltano',
+    name: 'Dagster-Meltano',
+    desc: 'Dagster-Meltano connector.',
+    version: DAGSTER_MELTANO_VERSION,
+    install: async () => {
+      return await execShell(`cd ${projectName} && poetry add dagster-meltano@${DAGSTER_MELTANO_VERSION}`)
+    },
+    postInit: async () => {
+      // Add the connection code
+      await Bun.write(`./${projectName}/dagster/${projectName}/meltano.py`, './src/cli/templates/dagster-meltano/meltano.py')
+    },
+  }
+}
+
+// dagster-dbt connector
+export const getDagsterDbtConfig = (projectName: string): ToolConfig => {
+  return {
+    id: 'dagster-dbt',
+    name: 'Dagster-DBT',
+    desc: 'Dagster-DBT connector.',
+    version: DAGSTER_DBT_VERSION,
+    install: async () => {
+      return await execShell(`cd ${projectName} && poetry add dagster-dbt@${DAGSTER_DBT_VERSION}`)
+    },
+    postInit: async () => {
+      // Add the connection code
+      await Bun.write(`./${projectName}/dagster/${projectName}/dbt_assets.py`, './src/cli/templates/dagster-dbt/dbt_assets.py')
+      await Bun.write(`./${projectName}/dagster/${projectName}/__init__.py`, './src/cli/templates/dagster-dbt/__init__.py')
+    },
   }
 }

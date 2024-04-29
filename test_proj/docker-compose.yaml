@@ -1,0 +1,194 @@
+version: "3"
+services:
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server --address "0.0.0.0:9000" --console-address "0.0.0.0:9001" /data
+    restart: always
+    environment:
+      - MINIO_ROOT_USER=${AWS_ACCESS_KEY_ID}
+      - MINIO_ROOT_PASSWORD=${AWS_SECRET_ACCESS_KEY}
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - minio_data:/data
+    networks:
+      - shared_network
+  mc:
+    image: minio/mc
+    container_name: mc
+    hostname: mc
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    entrypoint: >-
+      /bin/sh -c "
+
+      until (/usr/bin/mc config host add minio ${S3_ENDPOINT} AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY}) do echo ...waiting... && sleep 1; done;
+
+      /usr/bin/mc mb minio/${LAKEHOUSE_NAME};
+
+      /usr/bin/mc policy set public minio/${LAKEHOUSE_NAME};
+
+      tail -f /dev/null;
+
+      "
+    networks:
+      - shared_network
+    depends_on:
+      - minio
+  iceberg-rest:
+    image: tabulario/iceberg-rest
+    container_name: iceberg_rest
+    ports:
+      - 8181:8181
+    environment:
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - CATALOG_WAREHOUSE=s3a://${LAKEHOUSE_NAME}/
+      - CATALOG_IO__IMPL=org.apache.iceberg.aws.s3.S3FileIO
+      - CATALOG_S3_ENDPOINT=${S3_ENDPOINT}
+      - CATALOG_CATALOG__IMPL=org.apache.iceberg.jdbc.JdbcCatalog
+      - CATALOG_URI=jdbc:postgresql://iceberg-pg-catalog:5432/${ICEBERG_PG_CATALOG_DB}
+      - CATALOG_JDBC_USER=${ICEBERG_PG_CATALOG_USER}
+      - CATALOG_JDBC_PASSWORD=${ICEBERG_PG_CATALOG_PASSWORD}
+    networks:
+      - shared_network
+    depends_on:
+      - iceberg-pg-catalog
+  iceberg-pg-catalog:
+    image: postgres:15-alpine
+    container_name: iceberg_pg_catalog
+    environment:
+      - POSTGRES_USER=${ICEBERG_PG_CATALOG_USER}
+      - POSTGRES_PASSWORD=${ICEBERG_PG_CATALOG_PASSWORD}
+      - POSTGRES_DB=${ICEBERG_PG_CATALOG_DB}
+    healthcheck:
+      test:
+        - CMD
+        - pg_isready
+        - -U
+        - ${ICEBERG_PG_CATALOG_USER}
+      interval: 5s
+      retries: 5
+    ports:
+      - 5432:5432
+    volumes:
+      - iceberg_pg_catalog_data:/var/lib/postgresql/data
+    networks:
+      - shared_network
+  trino:
+    image: trinodb/trino:437
+    container_name: trino
+    ports:
+      - 8080:8080
+    environment:
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_ENDPOINT=${S3_ENDPOINT}
+      - LAKEHOUSE_NAME=${LAKEHOUSE_NAME}
+    volumes:
+      - ./trino/etc:/etc/trino
+    networks:
+      - shared_network
+    depends_on:
+      - minio
+  superset-cache:
+    image: redis:7
+    container_name: superset_cache
+    restart: unless-stopped
+    volumes:
+      - superset_cache:/data
+    networks:
+      - shared_network
+  superset-db:
+    env_file: superset/docker/.env
+    image: postgres:15
+    container_name: superset_db
+    restart: unless-stopped
+    volumes:
+      - superset_db_home:/var/lib/postgresql/data
+    networks:
+      - shared_network
+  superset:
+    env_file: superset/docker/.env
+    image: apachesuperset.docker.scarf.sh/apache/superset:${TAG:-latest}
+    container_name: superset_app
+    command:
+      - /app/docker/docker-bootstrap.sh
+      - app-gunicorn
+    user: root
+    restart: unless-stopped
+    ports:
+      - 8088:8088
+    depends_on: &a1
+      - superset-db
+      - superset-cache
+    volumes: &a2
+      - ./superset/docker:/app/docker
+      - superset_home:/app/superset_home
+    networks:
+      - shared_network
+  superset-init:
+    image: apachesuperset.docker.scarf.sh/apache/superset:${TAG:-latest}
+    container_name: superset_init
+    command:
+      - /app/docker/docker-init.sh
+    env_file: superset/docker/.env
+    depends_on: *a1
+    user: root
+    volumes: *a2
+    healthcheck:
+      disable: true
+    networks:
+      - shared_network
+  superset-worker:
+    image: apachesuperset.docker.scarf.sh/apache/superset:${TAG:-latest}
+    container_name: superset_worker
+    command:
+      - /app/docker/docker-bootstrap.sh
+      - worker
+    env_file: superset/docker/.env
+    restart: unless-stopped
+    depends_on: *a1
+    user: root
+    volumes: *a2
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - celery -A superset.tasks.celery_app:app inspect ping -d
+          celery@$$HOSTNAME
+    networks:
+      - shared_network
+  superset-worker-beat:
+    image: apachesuperset.docker.scarf.sh/apache/superset:${TAG:-latest}
+    container_name: superset_worker_beat
+    command:
+      - /app/docker/docker-bootstrap.sh
+      - beat
+    env_file: superset/docker/.env
+    restart: unless-stopped
+    depends_on: *a1
+    user: root
+    volumes: *a2
+    healthcheck:
+      disable: true
+    networks:
+      - shared_network
+volumes:
+  minio_data: null
+  iceberg_pg_catalog_data: null
+  superset_home:
+    external: false
+  superset_db_home:
+    external: false
+  superset_cache:
+    external: false
+networks:
+  shared_network:
+    driver: bridge
+

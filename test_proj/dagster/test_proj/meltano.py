@@ -1,0 +1,1 @@
+./src/cli/templates/dagster-meltano/meltano.py

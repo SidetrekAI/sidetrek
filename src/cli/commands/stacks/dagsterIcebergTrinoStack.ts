@@ -12,6 +12,8 @@ import {
 } from '../../utils'
 import {
   getDagsterConfig,
+  getDagsterDbtConfig,
+  getDagsterMeltanoConfig,
   getDbtConfig,
   getIcebergConfig,
   getMeltanoConfig,
@@ -39,6 +41,13 @@ import {
   TRINO_USER_ENVNAME,
   ICEBERG_CATALOG_NAME_ENVNAME,
   MINIO_SERVER_HOST_PORT,
+  PYICEBERG_CATALOG__ICEBERGCATALOG__URI_ENVNAME,
+  PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ENDPOINT_ENVNAME,
+  PYICEBERG_CATALOG__ICEBERGCATALOG__PY_IO_IMPL_ENVNAME,
+  PYICEBERG_CATALOG__ICEBERGCATALOG__S3__REGION_ENVNAME,
+  PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ACCESS_KEY_ID_ENVNAME,
+  PYICEBERG_CATALOG__ICEBERGCATALOG__S3__SECRET_ACCESS_KEY_ENVNAME,
+  ICEBERG_REST_HOST_PORT,
 } from '../../constants'
 
 const s = p.spinner()
@@ -100,7 +109,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    */
 
   // Set up Dagster
-  s.start('Setting up Dagster (this may take a few minutes)')
+  s.start('Setting up Dagster (this may take a couple minutes)')
   const dagsterInitStartTime = startStopwatch()
   const dagsterInitResp = await initDagster(projectName)
 
@@ -113,7 +122,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   }
 
   // Set up Meltano
-  s.start('Setting up Meltano (this may take a few minutes)')
+  s.start('Setting up Meltano (this may take a couple minutes)')
   const meltanoInitStartTime = startStopwatch()
   const meltanoInitResp = await initMeltano(projectName)
 
@@ -126,7 +135,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   }
 
   // Set up DBT
-  s.start('Setting up DBT (this may take a few minutes)')
+  s.start('Setting up DBT (this may take a couple minutes)')
   const dbtInitStartTime = startStopwatch()
   const dbtInitResp = await initDbt(projectName)
 
@@ -139,7 +148,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   }
 
   // Set up Trino
-  s.start('Setting up Trino (this may take a few minutes)')
+  s.start('Setting up Trino (this may take a couple minutes)')
   const trinoInitStartTime = startStopwatch()
   const trinoInitResp = await initTrino(projectName)
 
@@ -199,18 +208,30 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    */
   s.start('Setting up other project level configurations')
   const envsStartTime = startStopwatch()
+
+  const S3_ENDPOINT = `http://minio:${MINIO_SERVER_HOST_PORT}`
+  const AWS_REGION = 'us-west-2'
+  const AWS_ACCESS_KEY_ID = 'admin'
+  const AWS_SECRET_ACCESS_KEY = 'admin_secret'
+
   const envs = [
     `${PROJECT_DIRNAME_ENVNAME}=${projectName}`,
-    `${AWS_REGION_ENVNAME}=us-west-2`,
-    `${AWS_ACCESS_KEY_ID_ENVNAME}=admin`,
-    `${AWS_SECRET_ACCESS_KEY_ENVNAME}=admin_secret`,
+    `${AWS_REGION_ENVNAME}=${AWS_REGION}`,
+    `${AWS_ACCESS_KEY_ID_ENVNAME}=${AWS_ACCESS_KEY_ID}`,
+    `${AWS_SECRET_ACCESS_KEY_ENVNAME}=${AWS_SECRET_ACCESS_KEY}`,
     `${LAKEHOUSE_NAME_ENVNAME}=lakehouse`,
-    `${S3_ENDPOINT_ENVNAME}=http://minio:${MINIO_SERVER_HOST_PORT}`,
+    `${S3_ENDPOINT_ENVNAME}=${S3_ENDPOINT}`,
     `${ICEBERG_CATALOG_NAME_ENVNAME}=icebergcatalog`,
     `${ICEBERG_PG_CATALOG_USER_ENVNAME}=iceberg`,
     `${ICEBERG_PG_CATALOG_PASSWORD_ENVNAME}=iceberg`,
     `${ICEBERG_PG_CATALOG_DB_ENVNAME}=iceberg`,
     `${TRINO_USER_ENVNAME}=admin`,
+    `${PYICEBERG_CATALOG__ICEBERGCATALOG__URI_ENVNAME}=http://iceberg-rest:${ICEBERG_REST_HOST_PORT}`,
+    `${PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ENDPOINT_ENVNAME}=${S3_ENDPOINT}`,
+    `${PYICEBERG_CATALOG__ICEBERGCATALOG__PY_IO_IMPL_ENVNAME}=pyiceberg.io.pyarrow.PyArrowFileIO`,
+    `${PYICEBERG_CATALOG__ICEBERGCATALOG__S3__REGION_ENVNAME}=${AWS_REGION}`,
+    `${PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ACCESS_KEY_ID_ENVNAME}=${AWS_ACCESS_KEY_ID}`,
+    `${PYICEBERG_CATALOG__ICEBERGCATALOG__S3__SECRET_ACCESS_KEY_ENVNAME}=${AWS_SECRET_ACCESS_KEY}`,
   ]
   const envsStr = envs.join('\n')
   await Bun.write(`./${projectName}/.env`, envsStr) // overwrites
@@ -219,8 +240,8 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   await Bun.write(`./${projectName}/.gitignore`, gitignorefileTemplate)
 
   // Copy the .env file to /dagster and /meltano
-  await Bun.write(`./${projectName}/.env`, `./${projectName}/dagster/${projectName}/.env`)
-  await Bun.write(`./${projectName}/.env`, `./${projectName}/meltano/.env`)
+  await Bun.write(`./${projectName}/dagster/${projectName}/.env`, `./${projectName}/.env`)
+  await Bun.write(`./${projectName}/meltano/.env`, `./${projectName}/.env`)
 
   const envsDuration = endStopwatch(envsStartTime)
   s.stop('Successfully set up other project level configurations.' + chalk.gray(` [${envsDuration}ms]`))
@@ -232,8 +253,30 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    */
 
   // dagster-meltano
+  s.start('Adding Dagster/Meltano connection')
+  const dagsterMeltanoStartTime = startStopwatch()
+  const dagsterMeltanoResp = await initDagsterMeltano(projectName)
+
+  if (dagsterMeltanoResp?.error) {
+    const errorMessage = `Sorry, something went wrong while adding Dagster/Meltano connection.\n\n${dagsterMeltanoResp.error?.stderr}`
+    exitOnError(errorMessage)
+  } else {
+    const dagsterMeltanoDuration = endStopwatch(dagsterMeltanoStartTime)
+    s.stop('Dagster/Meltano connection added successfully.' + chalk.gray(` [${dagsterMeltanoDuration}ms]`))
+  }
 
   // dagster-dbt
+  s.start('Adding Dagster/DBT connection')
+  const dagsterDbtStartTime = startStopwatch()
+  const dagsterDbtResp = await initDagsterDbt(projectName)
+
+  if (dagsterDbtResp?.error) {
+    const errorMessage = `Sorry, something went wrong while adding Dagster/DBT connection.\n\n${dagsterDbtResp.error?.stderr}`
+    exitOnError(errorMessage)
+  } else {
+    const dagsterDbtDuration = endStopwatch(dagsterDbtStartTime)
+    s.stop('Dagster/DBT connection added successfully.' + chalk.gray(` [${dagsterDbtDuration}ms]`))
+  }
 
   /**
    *
@@ -244,6 +287,15 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   //
 
   // dbt example code to access iceberg
+
+  /**
+   * 
+   * Wrap up
+   * 
+   */
+  s.start('Calculating total duration')
+  const totalDuration = endStopwatch(startTime)
+  s.stop(chalk.gray(`Total duration: ${totalDuration}ms`))
 }
 
 export const initDagster = async (projectName: string): Promise<ToolInitResponse> => {
@@ -422,7 +474,7 @@ export const initTrino = async (projectName: string): Promise<ToolInitResponse> 
   const config = getTrinoConfig(projectName)
   const { id, name } = config
 
-  // Initialize
+  // Run post-init script
   if (config.postInit) {
     const initResp = await config.postInit()
     if (initResp?.error) {
@@ -432,6 +484,90 @@ export const initTrino = async (projectName: string): Promise<ToolInitResponse> 
         error: {
           message: `Something went wrong while initializing ${name}.`,
           ...initResp?.error,
+        },
+      }
+    }
+  }
+
+  return {
+    id,
+    name,
+    response: `${name} successfully initialized!`,
+  }
+}
+
+export const initDagsterMeltano = async (projectName: string): Promise<ToolInitResponse> => {
+  // Initialize the tool (if necessary)
+  const config = getDagsterMeltanoConfig(projectName)
+  const { id, name } = config
+
+  // Run `poetry add`
+  if (config.install) {
+    const installResp = await config.install()
+    if (installResp?.error) {
+      return {
+        id,
+        name,
+        error: {
+          message: `Something went wrong while installing ${name}.`,
+          ...installResp?.error,
+        },
+      }
+    }
+  }
+
+  // Run post-init script
+  if (config.postInit) {
+    const postInitResp = await config.postInit()
+    if (postInitResp?.error) {
+      return {
+        id,
+        name,
+        error: {
+          message: `Something went wrong while running post-initialization script for ${name}.`,
+          ...postInitResp?.error,
+        },
+      }
+    }
+  }
+
+  return {
+    id,
+    name,
+    response: `${name} successfully initialized!`,
+  }
+}
+
+export const initDagsterDbt = async (projectName: string): Promise<ToolInitResponse> => {
+  // Initialize the tool (if necessary)
+  const config = getDagsterDbtConfig(projectName)
+  const { id, name } = config
+
+  // Run `poetry add`
+  if (config.install) {
+    const installResp = await config.install()
+    if (installResp?.error) {
+      return {
+        id,
+        name,
+        error: {
+          message: `Something went wrong while installing ${name}.`,
+          ...installResp?.error,
+        },
+      }
+    }
+  }
+
+  // Run post-init script
+  if (config.postInit) {
+    const postInitResp = await config.postInit()
+    if (postInitResp?.error) {
+      return {
+        id,
+        name,
+        error: {
+          message: `Something went wrong while running post-initialization script for ${name}.`,
+          ...postInitResp?.error,
         },
       }
     }

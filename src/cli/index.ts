@@ -13,9 +13,6 @@ export default async function runCli() {
         'fastest'
       )} way to build a ${colors.sidetrekPurple('modern data stack')}.`
     )
-  // .option('-l, --ls  [value]', 'List directory contents')
-  // .option('-m, --mkdir <value>', 'Create a directory')
-  // .option('-t, --touch <value>', 'Create a file')
 
   const initCommand = program
     .command('init')

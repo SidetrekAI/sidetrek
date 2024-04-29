@@ -25,12 +25,12 @@ export default async function init(options: any) {
       intro: () => p.intro(colors.sidetrekPurple(`🔥 Let's create a new data project!`)),
       prerequisites: async ({ results }) => {
         return await p.confirm({
-          message: `Sidetrek currently requires ${chalk.underline.yellow('Python 3.10-3.11')} (defaults to 3.10) and ${chalk.underline.yellow('Poetry')}. Are you ready to continue?`,
+          message: `Sidetrek requires ${chalk.underline.yellow('Python 3.10-3.11')} and ${chalk.underline.yellow('Poetry')} installed. Are you ready to continue?`,
         })
       },
       pythonVersion: async ({ results }) => {
         if (!results.prerequisites) {
-          p.cancel('No worries - please try again after installing the prerequisites.')
+          p.cancel('No worries - please try again after installing the prerequisites.\n   (e.g. `pyenv install 3.10 && pyenv global 3.10 && pip install poetry`)')
           process.exit(0)
         }
 
@@ -69,7 +69,7 @@ export default async function init(options: any) {
         }
       },
       outro: async () => {
-        const outroMessage = `You're all set - enjoy building your new data project! 🚀`
+        const outroMessage = colors.sidetrekPurple(`You're all set - enjoy building your new data project! 🚀`) +  colors.sidetrekLightPurple('\n   (Next: Check out the quickstart tutorial at https://sidetrek.com/docs)')
         return await p.outro(outroMessage)
       },
     },
