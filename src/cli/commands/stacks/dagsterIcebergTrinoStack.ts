@@ -160,7 +160,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   }
 
   // Set up Superset
-  s.start('Setting up Superset (this may take a few minutes)')
+  s.start('Setting up Superset (this may take a couple minutes)')
   const supersetInitStartTime = startStopwatch()
   const supersetInitResp = await initTool(projectName, 'superset')
 
