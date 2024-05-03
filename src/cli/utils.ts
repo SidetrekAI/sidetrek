@@ -7,6 +7,14 @@ import type { EnvFileObj, PromiseFactory, ShellResponse } from './types'
 import { colors, S_BAR, SHARED_NETWORK_NAME } from './constants'
 import type { ToolConfig } from './toolConfigs'
 
+const cwd = process.cwd()
+
+export const getPackageVersion = async () => {
+  const file = Bun.file(`${cwd}/package.json`)
+  const contents = await file.json()
+  return contents.version
+}
+
 export const startStopwatch = (): number => {
   return new Date().getTime()
 }

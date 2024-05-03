@@ -1,5 +1,6 @@
 import { $ } from 'bun'
 import { parseArgs } from 'util'
+import { getPackageVersion } from '../cli/utils'
 
 // bun run args
 const { values, positionals } = parseArgs({
@@ -17,7 +18,6 @@ const { production } = values
 console.log('Is production release:', production)
 
 const tempBuildDirPath = './temp/sidetrek'
-const cwd = process.cwd()
 
 const handleError = (err: any) => {
   console.log(`Failed with code ${err.exitCode}`)
@@ -58,12 +58,6 @@ const build = async () => {
     console.error('Error building package')
     handleError(err)
   }
-}
-
-const getPackageVersion = async () => {
-  const file = Bun.file(`${cwd}/package.json`)
-  const contents = await file.json()
-  return contents.version
 }
 
 const runGithubRelease = async () => {

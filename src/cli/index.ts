@@ -4,14 +4,17 @@ import { colors } from './constants'
 import init from './commands/init'
 import dev from './commands/dev'
 import logs from './commands/logs'
+import { getPackageVersion } from './utils'
 
 const program = new Command()
 
 // NOTE: In commander js, [] means optional, <> means required
 
 export default async function runCli() {
+  const version = await getPackageVersion()
+
   program
-    .version('0.1.0')
+    .version(version)
     .description(
       `🦄 ${colors.sidetrekPink('Sidetrek')} is the ${colors.sidetrekYellow(
         'fastest'
