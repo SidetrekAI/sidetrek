@@ -448,7 +448,7 @@ export const getDagsterMeltanoConfig = (projectName: string): ToolConfig => {
     },
     postInit: async () => {
       // Add the connection code
-      await Bun.write(`./${projectName}/dagster/${projectName}/meltano.py`, dagsterMeltanoMeltanoPy)
+      await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/${projectName}/meltano.py`, dagsterMeltanoMeltanoPy)
     },
   }
 }
@@ -465,8 +465,8 @@ export const getDagsterDbtConfig = (projectName: string): ToolConfig => {
     },
     postInit: async () => {
       // Add the connection code
-      await Bun.write(`./${projectName}/dagster/${projectName}/dbt_assets.py`, dagsterDbtDbtAssetsPy)
-      await Bun.write(`./${projectName}/dagster/${projectName}/__init__.py`, dagsterDbtInitPy)
+      await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/${projectName}/dbt_assets.py`, dagsterDbtDbtAssetsPy)
+      await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/${projectName}/__init__.py`, dagsterDbtInitPy)
     },
   }
 }

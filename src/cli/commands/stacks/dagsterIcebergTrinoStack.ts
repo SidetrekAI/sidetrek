@@ -52,7 +52,7 @@ import {
   sidetrek_config_name,
   DAGSTER_HOME_ENVNAME,
 } from '../../constants'
-import gitignore from '../../templates/gitignore_file'
+import gitignore from '../../templates/gitignore'
 
 const s = p.spinner()
 
@@ -244,8 +244,8 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   await Bun.write(`./${projectName}/.gitignore`, gitignore)
 
   // // Copy the .env file to /dagster and /meltano
-  await Bun.write(`./${projectName}/dagster/${projectName}/.env`, envsStr)
-  await Bun.write(`./${projectName}/meltano/.env`, envsStr)
+  await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/.env`, envsStr)
+  await Bun.write(`./${projectName}/${projectName}/meltano/.env`, envsStr)
 
   const envsDuration = endStopwatch(envsStartTime)
   s.stop('Successfully set up other project level configurations.' + chalk.gray(` [${envsDuration}ms]`))

@@ -11,7 +11,8 @@
   },
   "devDependencies": {
     "@types/bun": "^1.1.0",
-    "@types/ramda": "^0.29.12"
+    "@types/ramda": "^0.29.12",
+    "tar": "^7.0.1"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
