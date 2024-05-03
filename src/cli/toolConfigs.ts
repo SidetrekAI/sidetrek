@@ -372,6 +372,9 @@ export const getSupersetConfig = (projectName: string): ToolConfig => {
     postInit: async () => {
       // Update docker .env
       await createOrUpdateEnvFile(`./${projectName}/superset/docker/.env`, { SUPERSET_LOAD_EXAMPLES: 'no' })
+
+      // Remove .git
+      await execShell(`rm -rf ./${projectName}/superset/.git`)
     },
   }
 }
