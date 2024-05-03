@@ -2,7 +2,7 @@ import { $ } from 'bun'
 import * as R from 'ramda'
 import YAML from 'yaml'
 import type { ShellResponse } from './types'
-import { execShell } from './utils'
+import { createOrUpdateEnvFile, execShell } from './utils'
 import {
   AWS_ACCESS_KEY_ID_ENVNAME,
   AWS_REGION_ENVNAME,
@@ -119,10 +119,14 @@ export const getDbtConfig = (projectName: string): ToolConfig => {
     desc: 'An open source data transformation tool.',
     version: '0.21.0',
     install: async () => {
-      return await execShell(`cd ${projectName} && poetry add dbt-core@${DBT_CORE_VERSION} dbt-trino@${DBT_TRINO_VERSION}`)
+      return await execShell(
+        `cd ${projectName} && poetry add dbt-core@${DBT_CORE_VERSION} dbt-trino@${DBT_TRINO_VERSION}`
+      )
     },
     init: async () => {
-      return await execShell(`cd ${projectName}/${projectName} && mkdir dbt && cd dbt && poetry run dbt init --skip-profile-setup ${projectName}`)
+      return await execShell(
+        `cd ${projectName}/${projectName} && mkdir dbt && cd dbt && poetry run dbt init --skip-profile-setup ${projectName}`
+      )
     },
     postInit: async () => {
       // NOTE: dbt adds .gitignore by default - so no need to add it here
@@ -155,7 +159,9 @@ export const getDbtConfig = (projectName: string): ToolConfig => {
       await Bun.write(`./${projectName}/${projectName}/dbt/${projectName}/profiles.yml`, trinoDbtProfileYaml)
 
       // Update dbt_project.yml to 1) use trino profile, 2) remove example code, and 3) add automatic schema generation
-      const dbtProjectYamlJson = YAML.parse(await $`cat ./${projectName}/${projectName}/dbt/${projectName}/dbt_project.yml`.text())
+      const dbtProjectYamlJson = YAML.parse(
+        await $`cat ./${projectName}/${projectName}/dbt/${projectName}/dbt_project.yml`.text()
+      )
       const updatedDbtProjectYamlJson = R.compose(
         R.assoc('on-run-start', [
           `CREATE SCHEMA IF NOT EXISTS ${RAW_ICEBERG_TABLE_NAME}`,
@@ -198,11 +204,14 @@ export const getMinioConfig = (projectName: string): ToolConfig => {
         'AWS_SECRET_ACCESS_KEY=${' + AWS_SECRET_ACCESS_KEY_ENVNAME + '}',
       ],
       entrypoint:
-        '/bin/sh -c "\nuntil (/usr/bin/mc config host add minio ${' +
+        '/bin/sh -c "\nuntil (/usr/bin/mc config host add minio ' +
+        '${' +
         S3_ENDPOINT_ENVNAME +
         '} ' +
+        '${' +
         AWS_ACCESS_KEY_ID_ENVNAME +
         '} ' +
+        '${' +
         AWS_SECRET_ACCESS_KEY_ENVNAME +
         "}) do echo '...waiting...' && sleep 1; done;\n/usr/bin/mc mb minio/${" +
         LAKEHOUSE_NAME_ENVNAME +
@@ -343,96 +352,30 @@ export const getTrinoConfig = (projectName: string): ToolConfig => {
       await Bun.write(`./${projectName}/trino/etc/node.properties`, trinoInitFiles['node.properties'])
       await Bun.write(`./${projectName}/trino/etc/jvm.config`, trinoInitFiles['jvm.config'])
       await Bun.write(`./${projectName}/trino/etc/config.properties`, trinoInitFiles['config.properties'])
-      await Bun.write(`./${projectName}/trino/etc/catalog/iceberg.properties`, trinoIcebergCatalogFile['iceberg.properties'])
+      await Bun.write(
+        `./${projectName}/trino/etc/catalog/iceberg.properties`,
+        trinoIcebergCatalogFile['iceberg.properties']
+      )
     },
     shell: async () => {
       return await execShell(`docker exec -it trino trino`)
-    }
+    },
   }
 }
 
 // Superset
 export const getSupersetConfig = (projectName: string): ToolConfig => {
-  const supersetImage = 'apachesuperset.docker.scarf.sh/apache/superset:${TAG:-latest}'
-  const supersetDependsOn = ['superset-db', 'superset-cache']
-  const supersetVolumes = ['./superset/docker:/app/docker', `${SUPERSET_HOME_VOLUME_NAME}:/app/superset_home`]
-
-  const dockerComposeObj = {
-    'superset-cache': {
-      image: 'redis:7',
-      container_name: 'superset_cache',
-      restart: 'unless-stopped',
-      volumes: [`${SUPERSET_CACHE_VOLUME_NAME}:/data`],
-      networks: [SHARED_NETWORK_NAME],
-    },
-    'superset-db': {
-      env_file: 'superset/docker/.env',
-      image: 'postgres:15',
-      container_name: 'superset_db',
-      restart: 'unless-stopped',
-      volumes: [`${SUPERSET_DB_HOME_VOLUME_NAME}:/var/lib/postgresql/data`],
-      networks: [SHARED_NETWORK_NAME],
-    },
-    superset: {
-      env_file: 'superset/docker/.env',
-      image: supersetImage,
-      container_name: 'superset_app',
-      command: ['/app/docker/docker-bootstrap.sh', 'app-gunicorn'],
-      user: 'root',
-      restart: 'unless-stopped',
-      ports: ['8088:8088'],
-      depends_on: supersetDependsOn,
-      volumes: supersetVolumes,
-      networks: [SHARED_NETWORK_NAME],
-    },
-    'superset-init': {
-      image: supersetImage,
-      container_name: 'superset_init',
-      command: ['/app/docker/docker-init.sh'],
-      env_file: 'superset/docker/.env',
-      depends_on: supersetDependsOn,
-      user: 'root',
-      volumes: supersetVolumes,
-      healthcheck: {
-        disable: true,
-      },
-      networks: [SHARED_NETWORK_NAME],
-    },
-    'superset-worker': {
-      image: supersetImage,
-      container_name: 'superset_worker',
-      command: ['/app/docker/docker-bootstrap.sh', 'worker'],
-      env_file: 'superset/docker/.env',
-      restart: 'unless-stopped',
-      depends_on: supersetDependsOn,
-      user: 'root',
-      volumes: supersetVolumes,
-      healthcheck: {
-        test: ['CMD-SHELL', 'celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME'],
-      },
-      networks: [SHARED_NETWORK_NAME],
-    },
-    'superset-worker-beat': {
-      image: supersetImage,
-      container_name: 'superset_worker_beat',
-      command: ['/app/docker/docker-bootstrap.sh', 'beat'],
-      env_file: 'superset/docker/.env',
-      restart: 'unless-stopped',
-      depends_on: supersetDependsOn,
-      user: 'root',
-      volumes: supersetVolumes,
-      healthcheck: {
-        disable: true,
-      },
-      networks: [SHARED_NETWORK_NAME],
-    },
-  }
-
   return {
     id: 'superset',
     name: 'Superset',
     desc: 'An open-source data exploration and visualization platform.',
-    dockerComposeObj,
+    init: async () => {
+      return await execShell(`cd ${projectName} && git clone --depth=1 https://github.com/apache/superset.git`)
+    },
+    postInit: async () => {
+      // Update docker .env
+      await createOrUpdateEnvFile(`./${projectName}/superset/docker/.env`, { SUPERSET_LOAD_EXAMPLES: 'no' })
+    },
   }
 }
 
@@ -448,7 +391,10 @@ export const getDagsterMeltanoConfig = (projectName: string): ToolConfig => {
     },
     postInit: async () => {
       // Add the connection code
-      await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/${projectName}/meltano.py`, dagsterMeltanoMeltanoPy)
+      await Bun.write(
+        `./${projectName}/${projectName}/dagster/${projectName}/${projectName}/meltano.py`,
+        dagsterMeltanoMeltanoPy
+      )
     },
   }
 }
@@ -465,8 +411,14 @@ export const getDagsterDbtConfig = (projectName: string): ToolConfig => {
     },
     postInit: async () => {
       // Add the connection code
-      await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/${projectName}/dbt_assets.py`, dagsterDbtDbtAssetsPy)
-      await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/${projectName}/__init__.py`, dagsterDbtInitPy)
+      await Bun.write(
+        `./${projectName}/${projectName}/dagster/${projectName}/${projectName}/dbt_assets.py`,
+        dagsterDbtDbtAssetsPy
+      )
+      await Bun.write(
+        `./${projectName}/${projectName}/dagster/${projectName}/${projectName}/__init__.py`,
+        dagsterDbtInitPy
+      )
     },
   }
 }

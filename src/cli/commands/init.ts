@@ -7,6 +7,7 @@ import { validateProjectName } from '../validators'
 import { clackLog, endStopwatch, startStopwatch } from '../utils'
 import { buildDagsterIcebergTrinoStack } from './stacks/dagsterIcebergTrinoStack'
 
+// NOTE: cwd is the PARENT of the root project dir (because it's not created yet before `init`)
 export default async function init(options: any) {
   /**
    *

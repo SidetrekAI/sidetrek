@@ -9,6 +9,7 @@ import {
   genDockerCompose,
   createDockerComposeFile,
   startStopwatch,
+  createOrUpdateEnvFile,
 } from '../../utils'
 import {
   getDagsterConfig,
@@ -48,8 +49,6 @@ import {
   PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ACCESS_KEY_ID_ENVNAME,
   PYICEBERG_CATALOG__ICEBERGCATALOG__S3__SECRET_ACCESS_KEY_ENVNAME,
   ICEBERG_REST_HOST_PORT,
-  sidetrek_dirname,
-  sidetrek_config_name,
   DAGSTER_HOME_ENVNAME,
 } from '../../constants'
 import gitignore from '../../templates/gitignore'
@@ -85,9 +84,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // `poetry new` -> remove tests -> create sidetrek dir
   s.start('Scaffolding your project')
   const poetryNewStartTime = startStopwatch()
-  const poetryNewResp = await execShell(
-    `poetry new ${projectName} && rm -rf ./${projectName}/tests`
-  )
+  const poetryNewResp = await execShell(`poetry new ${projectName} && rm -rf ./${projectName}/tests`)
 
   if (poetryNewResp?.error) {
     const errorMessage = `Sorry, something went wrong while scaffolding the project via Poetry.\n\n${poetryNewResp.error?.stderr}`
@@ -218,34 +215,33 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   const AWS_ACCESS_KEY_ID = 'admin'
   const AWS_SECRET_ACCESS_KEY = 'admin_secret'
 
-  const envs = [
-    `${PROJECT_DIRNAME_ENVNAME}=${projectName}`,
-    `${DAGSTER_HOME_ENVNAME}=${process.cwd()}/${projectName}/dagster/${projectName}`,
-    `${AWS_REGION_ENVNAME}=${AWS_REGION}`,
-    `${AWS_ACCESS_KEY_ID_ENVNAME}=${AWS_ACCESS_KEY_ID}`,
-    `${AWS_SECRET_ACCESS_KEY_ENVNAME}=${AWS_SECRET_ACCESS_KEY}`,
-    `${LAKEHOUSE_NAME_ENVNAME}=lakehouse`,
-    `${S3_ENDPOINT_ENVNAME}=${S3_ENDPOINT}`,
-    `${ICEBERG_CATALOG_NAME_ENVNAME}=icebergcatalog`,
-    `${ICEBERG_PG_CATALOG_USER_ENVNAME}=iceberg`,
-    `${ICEBERG_PG_CATALOG_PASSWORD_ENVNAME}=iceberg`,
-    `${ICEBERG_PG_CATALOG_DB_ENVNAME}=iceberg`,
-    `${TRINO_USER_ENVNAME}=admin`,
-    `${PYICEBERG_CATALOG__ICEBERGCATALOG__URI_ENVNAME}=http://iceberg-rest:${ICEBERG_REST_HOST_PORT}`,
-    `${PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ENDPOINT_ENVNAME}=${S3_ENDPOINT}`,
-    `${PYICEBERG_CATALOG__ICEBERGCATALOG__PY_IO_IMPL_ENVNAME}=pyiceberg.io.pyarrow.PyArrowFileIO`,
-    `${PYICEBERG_CATALOG__ICEBERGCATALOG__S3__REGION_ENVNAME}=${AWS_REGION}`,
-    `${PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ACCESS_KEY_ID_ENVNAME}=${AWS_ACCESS_KEY_ID}`,
-    `${PYICEBERG_CATALOG__ICEBERGCATALOG__S3__SECRET_ACCESS_KEY_ENVNAME}=${AWS_SECRET_ACCESS_KEY}`,
-  ]
-  const envsStr = envs.join('\n')
-  await Bun.write(`./${projectName}/.env`, envsStr) // overwrites
+  const envFileObj = {
+    PROJECT_DIRNAME_ENVNAME: `${projectName}`,
+    DAGSTER_HOME_ENVNAME: `${process.cwd()}/${projectName}/${projectName}/dagster/${projectName}`,
+    AWS_REGION_ENVNAME: `${AWS_REGION}`,
+    AWS_ACCESS_KEY_ID_ENVNAME: `${AWS_ACCESS_KEY_ID}`,
+    AWS_SECRET_ACCESS_KEY_ENVNAME: `${AWS_SECRET_ACCESS_KEY}`,
+    LAKEHOUSE_NAME_ENVNAME: `lakehouse`,
+    S3_ENDPOINT_ENVNAME: `${S3_ENDPOINT}`,
+    ICEBERG_CATALOG_NAME_ENVNAME: `icebergcatalog`,
+    ICEBERG_PG_CATALOG_USER_ENVNAME: `iceberg`,
+    ICEBERG_PG_CATALOG_PASSWORD_ENVNAME: `iceberg`,
+    ICEBERG_PG_CATALOG_DB_ENVNAME: `iceberg`,
+    TRINO_USER_ENVNAME: `admin`,
+    PYICEBERG_CATALOG__ICEBERGCATALOG__URI_ENVNAME: `http://iceberg-rest:${ICEBERG_REST_HOST_PORT}`,
+    PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ENDPOINT_ENVNAME: `${S3_ENDPOINT}`,
+    PYICEBERG_CATALOG__ICEBERGCATALOG__PY_IO_IMPL_ENVNAME: `pyiceberg.io.pyarrow.PyArrowFileIO`,
+    PYICEBERG_CATALOG__ICEBERGCATALOG__S3__REGION_ENVNAME: `${AWS_REGION}`,
+    PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ACCESS_KEY_ID_ENVNAME: `${AWS_ACCESS_KEY_ID}`,
+    PYICEBERG_CATALOG__ICEBERGCATALOG__S3__SECRET_ACCESS_KEY_ENVNAME: `${AWS_SECRET_ACCESS_KEY}`,
+  }
+  await createOrUpdateEnvFile(`./${projectName}/.env`, envFileObj)
 
   await Bun.write(`./${projectName}/.gitignore`, gitignore)
 
   // // Copy the .env file to /dagster and /meltano
-  await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/.env`, envsStr)
-  await Bun.write(`./${projectName}/${projectName}/meltano/.env`, envsStr)
+  await createOrUpdateEnvFile(`./${projectName}/${projectName}/dagster/${projectName}/.env`, envFileObj)
+  await createOrUpdateEnvFile(`./${projectName}/${projectName}/meltano/.env`, envFileObj)
 
   const envsDuration = endStopwatch(envsStartTime)
   s.stop('Successfully set up other project level configurations.' + chalk.gray(` [${envsDuration}ms]`))

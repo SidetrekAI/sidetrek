@@ -3,7 +3,7 @@ import { $ } from 'bun'
 import YAML from 'yaml'
 import * as p from '@clack/prompts'
 import chalk from 'chalk'
-import type { PromiseFactory, ShellResponse } from './types'
+import type { EnvFileObj, PromiseFactory, ShellResponse } from './types'
 import { colors, S_BAR, SHARED_NETWORK_NAME } from './constants'
 import type { ToolConfig } from './toolConfigs'
 
@@ -155,4 +155,23 @@ export const genDockerCompose = ({ toolDockerComposeObjs, volumes, networks }: G
 export const createDockerComposeFile = async (dockerComposeObj: any, filePath: string): Promise<ShellResponse> => {
   const dockerComposeYaml = YAML.stringify(dockerComposeObj)
   return await execShell(`echo '${dockerComposeYaml}' > ${filePath}`)
+}
+
+export const createOrUpdateEnvFile = async (envFilePath: string, envFileObj: EnvFileObj): Promise<ShellResponse> => {
+  if (!envFilePath) throw new Error('No env file path provided')
+  if (!envFileObj) throw new Error('No env file object provided')
+
+  const dockerEnv = Bun.file(envFilePath)
+  const dockerEnvStr = await dockerEnv.text()
+  const existingEnvFileObj: EnvFileObj = dockerEnvStr.split('\n').reduce((acc, curr) => {
+    const [key, value] = curr.split('=')
+    return { ...acc, [key]: value }
+  }, {})
+  const editedEnvFileObj: EnvFileObj = { ...existingEnvFileObj, ...envFileObj }
+  const editedEnvFileStr = R.compose(
+    R.join('\n'),
+    R.map(([k, v]) => `${k}=${v}`),
+    R.toPairs
+  )(editedEnvFileObj)
+  return await execShell(`echo '${editedEnvFileStr}' > ${envFilePath}`)
 }

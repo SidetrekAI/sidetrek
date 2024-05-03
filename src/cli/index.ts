@@ -7,6 +7,8 @@ import logs from './commands/logs'
 
 const program = new Command()
 
+// NOTE: In commander js, [] means optional, <> means required
+
 export default async function runCli() {
   program
     .version('0.1.0')
@@ -19,7 +21,7 @@ export default async function runCli() {
   const initCommand = program
     .command('init')
     .description('Initialize your project')
-    .option('--skip-example  [value]', 'Skip the example code')
+    .option('--skip-example', 'Skip the example code')
     .action((_, options) => {
       init(options)
     })
@@ -27,18 +29,19 @@ export default async function runCli() {
   const devCommand = program
     .command('dev')
     .description('Start the development server')
+    .option('--build', 'Re-build the docker containers')
+    .option('--skip <value...>', 'Skip a specific service')
     .action((_, options) => {
-      dev()
+      dev(options)
     })
 
   const logsCommand = program
     .command('logs')
     .description('View logs')
-    .argument('[string]', 'string to split')
+    .argument('[string]', 'Service to view logs for')
     .option('-f, --follow', 'Follow logs')
-    .option('--since [value]', 'Only show logs since a specific time ago')
+    .option('--since <value>', 'Only show logs since a specific time ago')
     .action((service, options) => {
-      console.log(service)
       logs(service, options)
     })
 

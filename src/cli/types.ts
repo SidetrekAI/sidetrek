@@ -14,3 +14,7 @@ export interface ToolInitResponse extends ShellResponse {
 }
 
 export type PromiseFactory = () => Promise<any>
+
+export interface EnvFileObj {
+  [key: string]: string
+}

@@ -1,17 +1,45 @@
 import { $ } from 'bun'
-import { create as createTar } from 'tar'
 
 const tempBuildDirPath = './temp/sidetrek'
 const cwd = process.cwd()
 
+const handleError = (err: any) => {
+  console.log(`Failed with code ${err.exitCode}`)
+  console.log(err.stdout.toString())
+  console.log(err.stderr.toString())
+}
+
+const createDirs = async () => {
+  try {
+    // Create temp build dir - will be cleaned up after
+    await $`mkdir -p ${tempBuildDirPath}`
+
+    // Create release dir
+    await $`mkdir -p ./release`
+  } catch (err) {
+    console.error('Error creating temp build dir')
+    handleError(err)
+  }
+}
+
+const incrementVersion = async () => {
+  try {
+    // Increment version
+    await $`npm version patch`
+  } catch (err) {
+    console.error('Error incrementing the version')
+    handleError(err)
+  }
+}
+
 const build = async () => {
   try {
     // Build
-    // await $`npm version patch && bun build ./index.ts --compile --minify --sourcemap --outfile ${tempBuildFilePath}`
     await $`bun build ./index.ts --compile --minify --sourcemap --outfile ${tempBuildDirPath}/sidetrek`
     console.log('Packaged built successfully.')
-  } catch (error) {
-    console.error('Error building package:', error)
+  } catch (err) {
+    console.error('Error building package')
+    handleError(err)
   }
 }
 
@@ -30,22 +58,23 @@ const tar = async () => {
     console.log('Copied release script.')
 
     // Tar
-    await createTar({ gzip: true, file: `sidetrek.${version}.tar.gz` }, [tempBuildDirPath])
+    await $`tar -czvf ./release/sidetrek.${version}.tar.gz -C ${tempBuildDirPath} .`
     console.log('Tar created successfully.')
-  } catch (error) {
-    console.error('Error creating tar:', error)
+  } catch (err) {
+    console.error('Error creating tar')
+    handleError(err)
   }
 }
 
 async function main() {
-  await $`mkdir -p ./temp/sidetrek`
-
+  await createDirs()
+  await incrementVersion()
   await build()
   await tar()
 
   // Clean up
-  // await $`rm -rf ${tempBuildDirPath}`.text()
+  await $`rm -rf ${tempBuildDirPath}`
   console.log('Done!')
 }
 
-main()
+await main()
