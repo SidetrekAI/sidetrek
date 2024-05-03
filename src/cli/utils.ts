@@ -181,7 +181,9 @@ export const createOrUpdateEnvFile = async (envFilePath: string, envFileObj: Env
     const editedEnvFileObj: EnvFileObj = { ...existingEnvFileObj, ...envFileObj }
     const editedEnvFileStr = R.compose(
       R.join('\n'),
-      R.map(([k, v]) => `${k}=${v}`),
+      R.map(([k, v]) => {
+        return !v ? k : `${k}=${v}` // Handle comments!
+      }),
       R.toPairs
     )(editedEnvFileObj)
     return await execShell(`echo '${editedEnvFileStr}' > ${envFilePath}`)
