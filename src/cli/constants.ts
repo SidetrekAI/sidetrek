@@ -41,14 +41,6 @@ export const ICEBERG_PG_CATALOG_VOLUME = { [ICEBERG_PG_CATALOG_VOLUME_NAME]: nul
 export const TRINO_VERSION = '437'
 export const TRINO_HOST_PORT = '8080'
 export const TRINO_CONTAINER_PORT = '8080'
-export const SUPERSET_HOST_PORT = '8088'
-export const SUPERSET_CONTAINER_PORT = '8088'
-export const SUPERSET_HOME_VOLUME_NAME = 'superset_home'
-export const SUPERSET_HOME_VOLUME = { [SUPERSET_HOME_VOLUME_NAME]: { external: false } }
-export const SUPERSET_DB_HOME_VOLUME_NAME = 'superset_db_home'
-export const SUPERSET_DB_HOME_VOLUME = { [SUPERSET_DB_HOME_VOLUME_NAME]: { external: false } }
-export const SUPERSET_CACHE_VOLUME_NAME = 'superset_cache'
-export const SUPERSET_CACHE_VOLUME = { [SUPERSET_CACHE_VOLUME_NAME]: { external: false } }
 
 export const AWS_REGION_ENVNAME = 'AWS_REGION'
 export const AWS_ACCESS_KEY_ID_ENVNAME = 'AWS_ACCESS_KEY_ID'

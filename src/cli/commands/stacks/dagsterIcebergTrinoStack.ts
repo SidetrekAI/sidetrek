@@ -27,9 +27,6 @@ import {
   SHARED_NETWORK_NAME,
   MINIO_VOLUME,
   ICEBERG_PG_CATALOG_VOLUME,
-  SUPERSET_HOME_VOLUME,
-  SUPERSET_DB_HOME_VOLUME,
-  SUPERSET_CACHE_VOLUME,
   AWS_REGION_ENVNAME,
   AWS_ACCESS_KEY_ID_ENVNAME,
   AWS_SECRET_ACCESS_KEY_ENVNAME,
@@ -52,6 +49,7 @@ import {
   DAGSTER_HOME_ENVNAME,
 } from '../../constants'
 import gitignore from '../../templates/gitignore'
+import { initTool } from '../utils'
 
 const s = p.spinner()
 
@@ -112,7 +110,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // Set up Dagster
   s.start('Setting up Dagster (this may take a couple minutes)')
   const dagsterInitStartTime = startStopwatch()
-  const dagsterInitResp = await initDagster(projectName)
+  const dagsterInitResp = await initTool(projectName, 'dagster')
 
   if (dagsterInitResp?.error) {
     const errorMessage = `Sorry, something went wrong while intializing Dagster.\n\n${dagsterInitResp.error?.stderr}`
@@ -125,7 +123,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // Set up Meltano
   s.start('Setting up Meltano (this may take a couple minutes)')
   const meltanoInitStartTime = startStopwatch()
-  const meltanoInitResp = await initMeltano(projectName)
+  const meltanoInitResp = await initTool(projectName, 'meltano')
 
   if (meltanoInitResp?.error) {
     const errorMessage = `Sorry, something went wrong while intializing Meltano.\n\n${meltanoInitResp.error?.stderr}`
@@ -138,7 +136,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // Set up DBT
   s.start('Setting up DBT (this may take a couple minutes)')
   const dbtInitStartTime = startStopwatch()
-  const dbtInitResp = await initDbt(projectName)
+  const dbtInitResp = await initTool(projectName, 'dbt')
 
   if (dbtInitResp?.error) {
     const errorMessage = `Sorry, something went wrong while intializing DBT.\n\n${dbtInitResp.error?.stderr}`
@@ -151,7 +149,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // Set up Trino
   s.start('Setting up Trino (this may take a couple minutes)')
   const trinoInitStartTime = startStopwatch()
-  const trinoInitResp = await initTrino(projectName)
+  const trinoInitResp = await initTool(projectName, 'trino')
 
   if (trinoInitResp?.error) {
     const errorMessage = `Sorry, something went wrong while intializing Trino.\n\n${trinoInitResp.error?.stderr}`
@@ -159,6 +157,19 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   } else {
     const trinoInitDuration = endStopwatch(trinoInitStartTime)
     s.stop('Trino set up successfully.' + chalk.gray(` [${trinoInitDuration}ms]`))
+  }
+
+  // Set up Superset
+  s.start('Setting up Superset (this may take a few minutes)')
+  const supersetInitStartTime = startStopwatch()
+  const supersetInitResp = await initTool(projectName, 'superset')
+
+  if (supersetInitResp?.error) {
+    const errorMessage = `Sorry, something went wrong while intializing Superset.\n\n${supersetInitResp.error?.stderr}`
+    exitOnError(errorMessage)
+  } else {
+    const supersetInitDuration = endStopwatch(supersetInitStartTime)
+    s.stop('Superset set up successfully.' + chalk.gray(` [${supersetInitDuration}ms]`))
   }
 
   /**
@@ -181,9 +192,6 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   const dcVolumes = {
     ...MINIO_VOLUME,
     ...ICEBERG_PG_CATALOG_VOLUME,
-    ...SUPERSET_HOME_VOLUME,
-    ...SUPERSET_DB_HOME_VOLUME,
-    ...SUPERSET_CACHE_VOLUME,
   }
   const dockerComposeObj = genDockerCompose({
     projectName,
@@ -255,7 +263,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // dagster-meltano
   s.start('Adding Dagster/Meltano connection')
   const dagsterMeltanoStartTime = startStopwatch()
-  const dagsterMeltanoResp = await initDagsterMeltano(projectName)
+  const dagsterMeltanoResp = await initTool(projectName, 'dagster-meltano')
 
   if (dagsterMeltanoResp?.error) {
     const errorMessage = `Sorry, something went wrong while adding Dagster/Meltano connection.\n\n${dagsterMeltanoResp.error?.stderr}`
@@ -268,7 +276,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // dagster-dbt
   s.start('Adding Dagster/DBT connection')
   const dagsterDbtStartTime = startStopwatch()
-  const dagsterDbtResp = await initDagsterDbt(projectName)
+  const dagsterDbtResp = await initTool(projectName, 'dagster-dbt')
 
   if (dagsterDbtResp?.error) {
     const errorMessage = `Sorry, something went wrong while adding Dagster/DBT connection.\n\n${dagsterDbtResp.error?.stderr}`
@@ -298,284 +306,326 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   s.stop(chalk.gray(`Total duration: ${totalDuration}ms`))
 }
 
-export const initDagster = async (projectName: string): Promise<ToolInitResponse> => {
-  // Initialize the tool (if necessary)
-  const config = getDagsterConfig(projectName)
-  const { id, name } = config
+// export const initDagster = async (projectName: string): Promise<ToolInitResponse> => {
+//   // Initialize the tool (if necessary)
+//   const config = getDagsterConfig(projectName)
+//   const { id, name } = config
 
-  // Run `poetry add`
-  if (config.install) {
-    const installResp = await config.install()
-    if (installResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while installing ${name}.`,
-          ...installResp?.error,
-        },
-      }
-    }
-  }
+//   // Run `poetry add`
+//   if (config.install) {
+//     const installResp = await config.install()
+//     if (installResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while installing ${name}.`,
+//           ...installResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  // Initialize
-  if (config.init) {
-    const initResp = await config.init()
-    if (initResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while intializing ${name}.`,
-          ...initResp?.error,
-        },
-      }
-    }
-  }
+//   // Initialize
+//   if (config.init) {
+//     const initResp = await config.init()
+//     if (initResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while intializing ${name}.`,
+//           ...initResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  // Run post-init script
-  if (config.postInit) {
-    const postInitResp = await config.postInit()
-    if (postInitResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while running post-initialization script for ${name}.`,
-          ...postInitResp?.error,
-        },
-      }
-    }
-  }
+//   // Run post-init script
+//   if (config.postInit) {
+//     const postInitResp = await config.postInit()
+//     if (postInitResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while running post-initialization script for ${name}.`,
+//           ...postInitResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  return {
-    id,
-    name,
-    response: `${name} successfully initialized!`,
-  }
-}
+//   return {
+//     id,
+//     name,
+//     response: `${name} successfully initialized!`,
+//   }
+// }
 
-export const initMeltano = async (projectName: string): Promise<ToolInitResponse> => {
-  // Initialize the tool (if necessary)
-  const config = getMeltanoConfig(projectName)
-  const { id, name } = config
+// export const initMeltano = async (projectName: string): Promise<ToolInitResponse> => {
+//   // Initialize the tool (if necessary)
+//   const config = getMeltanoConfig(projectName)
+//   const { id, name } = config
 
-  // Run `poetry add`
-  if (config.install) {
-    const installResp = await config.install()
-    if (installResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while installing ${name}.`,
-          ...installResp?.error,
-        },
-      }
-    }
-  }
+//   // Run `poetry add`
+//   if (config.install) {
+//     const installResp = await config.install()
+//     if (installResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while installing ${name}.`,
+//           ...installResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  // Initialize
-  if (config.init) {
-    const initResp = await config.init()
-    if (initResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while initializing ${name}.`,
-          ...initResp?.error,
-        },
-      }
-    }
-  }
+//   // Initialize
+//   if (config.init) {
+//     const initResp = await config.init()
+//     if (initResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while initializing ${name}.`,
+//           ...initResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  // Run post-init script
-  if (config.postInit) {
-    const postInitResp = await config.postInit()
-    if (postInitResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while running post-initialization script for ${name}.`,
-          ...postInitResp?.error,
-        },
-      }
-    }
-  }
+//   // Run post-init script
+//   if (config.postInit) {
+//     const postInitResp = await config.postInit()
+//     if (postInitResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while running post-initialization script for ${name}.`,
+//           ...postInitResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  return {
-    id,
-    name,
-    response: `${name} successfully initialized!`,
-  }
-}
+//   return {
+//     id,
+//     name,
+//     response: `${name} successfully initialized!`,
+//   }
+// }
 
-export const initDbt = async (projectName: string): Promise<ToolInitResponse> => {
-  // Initialize the tool (if necessary)
-  const config = getDbtConfig(projectName)
-  const { id, name } = config
+// export const initDbt = async (projectName: string): Promise<ToolInitResponse> => {
+//   // Initialize the tool (if necessary)
+//   const config = getDbtConfig(projectName)
+//   const { id, name } = config
 
-  // Run `poetry add`
-  if (config.install) {
-    const installResp = await config.install()
-    if (installResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while installing ${name}.`,
-          ...installResp?.error,
-        },
-      }
-    }
-  }
+//   // Run `poetry add`
+//   if (config.install) {
+//     const installResp = await config.install()
+//     if (installResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while installing ${name}.`,
+//           ...installResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  // Initialize
-  if (config.init) {
-    const initResp = await config.init()
-    if (initResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while initializing ${name}.`,
-          ...initResp?.error,
-        },
-      }
-    }
-  }
+//   // Initialize
+//   if (config.init) {
+//     const initResp = await config.init()
+//     if (initResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while initializing ${name}.`,
+//           ...initResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  // Run post-init script
-  if (config.postInit) {
-    const postInitResp = await config.postInit()
-    if (postInitResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while running post-initialization script for ${name}.`,
-          ...postInitResp?.error,
-        },
-      }
-    }
-  }
+//   // Run post-init script
+//   if (config.postInit) {
+//     const postInitResp = await config.postInit()
+//     if (postInitResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while running post-initialization script for ${name}.`,
+//           ...postInitResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  return {
-    id,
-    name,
-    response: `${name} successfully initialized!`,
-  }
-}
+//   return {
+//     id,
+//     name,
+//     response: `${name} successfully initialized!`,
+//   }
+// }
 
-export const initTrino = async (projectName: string): Promise<ToolInitResponse> => {
-  // Initialize the tool (if necessary)
-  const config = getTrinoConfig(projectName)
-  const { id, name } = config
+// export const initTrino = async (projectName: string): Promise<ToolInitResponse> => {
+//   // Initialize the tool (if necessary)
+//   const config = getTrinoConfig(projectName)
+//   const { id, name } = config
 
-  // Run post-init script
-  if (config.postInit) {
-    const initResp = await config.postInit()
-    if (initResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while initializing ${name}.`,
-          ...initResp?.error,
-        },
-      }
-    }
-  }
+//   // Run post-init script
+//   if (config.postInit) {
+//     const initResp = await config.postInit()
+//     if (initResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while initializing ${name}.`,
+//           ...initResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  return {
-    id,
-    name,
-    response: `${name} successfully initialized!`,
-  }
-}
+//   return {
+//     id,
+//     name,
+//     response: `${name} successfully initialized!`,
+//   }
+// }
 
-export const initDagsterMeltano = async (projectName: string): Promise<ToolInitResponse> => {
-  // Initialize the tool (if necessary)
-  const config = getDagsterMeltanoConfig(projectName)
-  const { id, name } = config
+// export const initSuperset = async (projectName: string): Promise<ToolInitResponse> => {
+//   // Initialize the tool (if necessary)
+//   const config = getSupersetConfig(projectName)
+//   const { id, name } = config
 
-  // Run `poetry add`
-  if (config.install) {
-    const installResp = await config.install()
-    if (installResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while installing ${name}.`,
-          ...installResp?.error,
-        },
-      }
-    }
-  }
+//   // Initialize
+//   if (config.init) {
+//     const initResp = await config.init()
+//     if (initResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while initializing ${name}.`,
+//           ...initResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  // Run post-init script
-  if (config.postInit) {
-    const postInitResp = await config.postInit()
-    if (postInitResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while running post-initialization script for ${name}.`,
-          ...postInitResp?.error,
-        },
-      }
-    }
-  }
+//   // Run post-init script
+//   if (config.postInit) {
+//     const initResp = await config.postInit()
+//     if (initResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while initializing ${name}.`,
+//           ...initResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  return {
-    id,
-    name,
-    response: `${name} successfully initialized!`,
-  }
-}
+//   return {
+//     id,
+//     name,
+//     response: `${name} successfully initialized!`,
+//   }
+// }
 
-export const initDagsterDbt = async (projectName: string): Promise<ToolInitResponse> => {
-  // Initialize the tool (if necessary)
-  const config = getDagsterDbtConfig(projectName)
-  const { id, name } = config
+// export const initDagsterMeltano = async (projectName: string): Promise<ToolInitResponse> => {
+//   // Initialize the tool (if necessary)
+//   const config = getDagsterMeltanoConfig(projectName)
+//   const { id, name } = config
 
-  // Run `poetry add`
-  if (config.install) {
-    const installResp = await config.install()
-    if (installResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while installing ${name}.`,
-          ...installResp?.error,
-        },
-      }
-    }
-  }
+//   // Run `poetry add`
+//   if (config.install) {
+//     const installResp = await config.install()
+//     if (installResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while installing ${name}.`,
+//           ...installResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  // Run post-init script
-  if (config.postInit) {
-    const postInitResp = await config.postInit()
-    if (postInitResp?.error) {
-      return {
-        id,
-        name,
-        error: {
-          message: `Something went wrong while running post-initialization script for ${name}.`,
-          ...postInitResp?.error,
-        },
-      }
-    }
-  }
+//   // Run post-init script
+//   if (config.postInit) {
+//     const postInitResp = await config.postInit()
+//     if (postInitResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while running post-initialization script for ${name}.`,
+//           ...postInitResp?.error,
+//         },
+//       }
+//     }
+//   }
 
-  return {
-    id,
-    name,
-    response: `${name} successfully initialized!`,
-  }
-}
+//   return {
+//     id,
+//     name,
+//     response: `${name} successfully initialized!`,
+//   }
+// }
+
+// export const initDagsterDbt = async (projectName: string): Promise<ToolInitResponse> => {
+//   // Initialize the tool (if necessary)
+//   const config = getDagsterDbtConfig(projectName)
+//   const { id, name } = config
+
+//   // Run `poetry add`
+//   if (config.install) {
+//     const installResp = await config.install()
+//     if (installResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while installing ${name}.`,
+//           ...installResp?.error,
+//         },
+//       }
+//     }
+//   }
+
+//   // Run post-init script
+//   if (config.postInit) {
+//     const postInitResp = await config.postInit()
+//     if (postInitResp?.error) {
+//       return {
+//         id,
+//         name,
+//         error: {
+//           message: `Something went wrong while running post-initialization script for ${name}.`,
+//           ...postInitResp?.error,
+//         },
+//       }
+//     }
+//   }
+
+//   return {
+//     id,
+//     name,
+//     response: `${name} successfully initialized!`,
+//   }
+// }
