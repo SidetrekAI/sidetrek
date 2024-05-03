@@ -48,7 +48,11 @@ import {
   PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ACCESS_KEY_ID_ENVNAME,
   PYICEBERG_CATALOG__ICEBERGCATALOG__S3__SECRET_ACCESS_KEY_ENVNAME,
   ICEBERG_REST_HOST_PORT,
+  sidetrek_dirname,
+  sidetrek_config_name,
+  DAGSTER_HOME_ENVNAME,
 } from '../../constants'
+import gitignore from '../../templates/gitignore_file'
 
 const s = p.spinner()
 
@@ -82,7 +86,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   s.start('Scaffolding your project')
   const poetryNewStartTime = startStopwatch()
   const poetryNewResp = await execShell(
-    `poetry new ${projectName} && rm -rf ./${projectName}/tests && mkdir -p ./${projectName}/sidetrek`
+    `poetry new ${projectName} && rm -rf ./${projectName}/tests`
   )
 
   if (poetryNewResp?.error) {
@@ -216,6 +220,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   const envs = [
     `${PROJECT_DIRNAME_ENVNAME}=${projectName}`,
+    `${DAGSTER_HOME_ENVNAME}=${process.cwd()}/${projectName}/dagster/${projectName}`,
     `${AWS_REGION_ENVNAME}=${AWS_REGION}`,
     `${AWS_ACCESS_KEY_ID_ENVNAME}=${AWS_ACCESS_KEY_ID}`,
     `${AWS_SECRET_ACCESS_KEY_ENVNAME}=${AWS_SECRET_ACCESS_KEY}`,
@@ -236,12 +241,11 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   const envsStr = envs.join('\n')
   await Bun.write(`./${projectName}/.env`, envsStr) // overwrites
 
-  const gitignorefileTemplate = await Bun.file('src/cli/templates/gitignore_file').text()
-  await Bun.write(`./${projectName}/.gitignore`, gitignorefileTemplate)
+  await Bun.write(`./${projectName}/.gitignore`, gitignore)
 
-  // Copy the .env file to /dagster and /meltano
-  await Bun.write(`./${projectName}/dagster/${projectName}/.env`, `./${projectName}/.env`)
-  await Bun.write(`./${projectName}/meltano/.env`, `./${projectName}/.env`)
+  // // Copy the .env file to /dagster and /meltano
+  await Bun.write(`./${projectName}/dagster/${projectName}/.env`, envsStr)
+  await Bun.write(`./${projectName}/meltano/.env`, envsStr)
 
   const envsDuration = endStopwatch(envsStartTime)
   s.stop('Successfully set up other project level configurations.' + chalk.gray(` [${envsDuration}ms]`))
@@ -289,9 +293,9 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // dbt example code to access iceberg
 
   /**
-   * 
+   *
    * Wrap up
-   * 
+   *
    */
   s.start('Calculating total duration')
   const totalDuration = endStopwatch(startTime)

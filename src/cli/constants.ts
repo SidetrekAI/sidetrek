@@ -1,11 +1,14 @@
 import chalk from 'chalk'
 import isUnicodeSupported from 'is-unicode-supported'
 
+export const sidetrek_dirname = 'sidetrek'
+export const sidetrek_config_name = 'sidetrek.yaml'
+
 export const colors = {
   sidetrekPink: chalk.hex('#fd6795'),
   sidetrekYellow: chalk.hex('#ffcc5a'),
   sidetrekPurple: chalk.hex('#9c85fc'),
-  sidetrekLightPurple: chalk.hex('#b3a1fb'),
+  sidetrekLightPurple: chalk.hex('#b9aee8'),
   lightGray: chalk.hex('#a1a1a1'),
 }
 
@@ -57,6 +60,7 @@ export const ICEBERG_PG_CATALOG_USER_ENVNAME = 'ICEBERG_PG_CATALOG_USER'
 export const ICEBERG_PG_CATALOG_PASSWORD_ENVNAME = 'ICEBERG_PG_CATALOG_PASSWORD'
 export const ICEBERG_PG_CATALOG_DB_ENVNAME = 'ICEBERG_PG_CATALOG_DB'
 export const PROJECT_DIRNAME_ENVNAME = 'PROJECT_DIRNAME'
+export const DAGSTER_HOME_ENVNAME = 'DAGSTER_HOME'
 export const TRINO_USER_ENVNAME = 'TRINO_USER'
 export const PYICEBERG_CATALOG__ICEBERGCATALOG__URI_ENVNAME = 'PYICEBERG_CATALOG__ICEBERGCATALOG__URI'
 export const PYICEBERG_CATALOG__ICEBERGCATALOG__S3__REGION_ENVNAME = 'PYICEBERG_CATALOG__ICEBERGCATALOG__S3__REGION'

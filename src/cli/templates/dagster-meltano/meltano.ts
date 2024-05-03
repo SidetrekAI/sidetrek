@@ -1,4 +1,4 @@
-import os
+const pyContent = `import os
 from pathlib import Path
 
 from dagster import job, Config, RunConfig
@@ -23,5 +23,6 @@ default_config = RunConfig(
 # Example usage of meltano run op
 @job(resource_defs={"meltano": meltano_resource}, config=default_config)
 def run_csv_to_iceberg_meltano_job():
-    tap_done = meltano_run_op("tap-csv target-iceberg")()
-    
+    tap_done = meltano_run_op("tap-csv target-iceberg")()`
+
+export default pyContent

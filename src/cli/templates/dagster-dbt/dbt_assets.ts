@@ -1,4 +1,4 @@
-import os
+const pyContent = `import os
 from pathlib import Path
 from dagster import AssetExecutionContext
 from dagster_dbt import DbtCliResource, dbt_assets
@@ -29,4 +29,6 @@ else:
 
 @dbt_assets(manifest=dbt_manifest_path)
 def dbt_project_assets(context: AssetExecutionContext, dbt: DbtCliResource):
-    yield from dbt.cli(["build"], context=context).stream()
+    yield from dbt.cli(["build"], context=context).stream()`
+
+export default pyContent

@@ -1,7 +1,5 @@
 import * as R from 'ramda'
 import { $ } from 'bun'
-import { v4 as uuidv4 } from 'uuid'
-import { Tail } from 'tail'
 import YAML from 'yaml'
 import * as p from '@clack/prompts'
 import chalk from 'chalk'

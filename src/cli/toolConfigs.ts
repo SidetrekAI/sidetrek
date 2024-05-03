@@ -39,6 +39,9 @@ import {
   TRINO_HOST_PORT,
   TRINO_VERSION,
 } from './constants'
+import dagsterMeltanoMeltanoPy from './templates/dagster-meltano/meltano'
+import dagsterDbtDbtAssetsPy from './templates/dagster-dbt/dbt_assets'
+import dagsterDbtInitPy from './templates/dagster-dbt/__init__'
 
 export interface ToolConfig {
   id: string
@@ -68,14 +71,14 @@ export const getDagsterConfig = (projectName: string): ToolConfig => {
     },
     init: async () => {
       return await execShell(
-        `cd ${projectName} && mkdir dagster && cd dagster && poetry run dagster project scaffold --name ${projectName}`
+        `cd ${projectName}/${projectName} && mkdir dagster && cd dagster && poetry run dagster project scaffold --name ${projectName}`
       )
     },
     postInit: async () => {
       // NOTE: .env will be copied from root later
 
       // Add .gitignore
-      await Bun.write(`./${projectName}/dagster/${projectName}/.gitignore`, '/history\n/storage\n/logs')
+      await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/.gitignore`, '/history\n/storage\n/logs')
     },
     run: async () => {
       return await execShell(`poetry run dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`)
@@ -97,13 +100,13 @@ export const getMeltanoConfig = (projectName: string): ToolConfig => {
       return await execShell(`cd ${projectName} && poetry add meltano@${MELTANO_VERSION}`)
     },
     init: async () => {
-      return await execShell(`cd ${projectName} && poetry run meltano init meltano`)
+      return await execShell(`cd ${projectName}/${projectName} && poetry run meltano init meltano`)
     },
     postInit: async () => {
       // NOTE: .env will be copied from root later
 
       // Add .gitignore
-      await Bun.write(`./${projectName}/meltano/.gitignore`, '/.meltano')
+      await Bun.write(`./${projectName}/${projectName}/meltano/.gitignore`, '/.meltano')
     },
   }
 }
@@ -119,13 +122,13 @@ export const getDbtConfig = (projectName: string): ToolConfig => {
       return await execShell(`cd ${projectName} && poetry add dbt-core@${DBT_CORE_VERSION} dbt-trino@${DBT_TRINO_VERSION}`)
     },
     init: async () => {
-      return await execShell(`cd ${projectName} && mkdir dbt && cd dbt && poetry run dbt init --skip-profile-setup ${projectName}`)
+      return await execShell(`cd ${projectName}/${projectName} && mkdir dbt && cd dbt && poetry run dbt init --skip-profile-setup ${projectName}`)
     },
     postInit: async () => {
       // NOTE: dbt adds .gitignore by default - so no need to add it here
 
       // Remove default dbt example code
-      await execShell(`rm -rf ./${projectName}/dbt/${projectName}/models/example`)
+      await execShell(`rm -rf ./${projectName}/${projectName}/dbt/${projectName}/models/example`)
 
       // Add trino profile
       const trinoDbtProfile = {
@@ -149,10 +152,10 @@ export const getDbtConfig = (projectName: string): ToolConfig => {
         },
       }
       const trinoDbtProfileYaml = YAML.stringify(trinoDbtProfile)
-      await Bun.write(`./${projectName}/dbt/${projectName}/profiles.yml`, trinoDbtProfileYaml)
+      await Bun.write(`./${projectName}/${projectName}/dbt/${projectName}/profiles.yml`, trinoDbtProfileYaml)
 
       // Update dbt_project.yml to 1) use trino profile, 2) remove example code, and 3) add automatic schema generation
-      const dbtProjectYamlJson = YAML.parse(await $`cat ./${projectName}/dbt/${projectName}/dbt_project.yml`.text())
+      const dbtProjectYamlJson = YAML.parse(await $`cat ./${projectName}/${projectName}/dbt/${projectName}/dbt_project.yml`.text())
       const updatedDbtProjectYamlJson = R.compose(
         R.assoc('on-run-start', [
           `CREATE SCHEMA IF NOT EXISTS ${RAW_ICEBERG_TABLE_NAME}`,
@@ -162,7 +165,7 @@ export const getDbtConfig = (projectName: string): ToolConfig => {
         R.assocPath(['profile'], 'trino') // Use trino profile
       )(dbtProjectYamlJson)
       const updatedDbtProjectYaml = YAML.stringify(updatedDbtProjectYamlJson)
-      await Bun.write(`./${projectName}/dbt/${projectName}/dbt_project.yml`, updatedDbtProjectYaml)
+      await Bun.write(`./${projectName}/${projectName}/dbt/${projectName}/dbt_project.yml`, updatedDbtProjectYaml)
     },
   }
 }
@@ -445,7 +448,7 @@ export const getDagsterMeltanoConfig = (projectName: string): ToolConfig => {
     },
     postInit: async () => {
       // Add the connection code
-      await Bun.write(`./${projectName}/dagster/${projectName}/meltano.py`, './src/cli/templates/dagster-meltano/meltano.py')
+      await Bun.write(`./${projectName}/dagster/${projectName}/meltano.py`, dagsterMeltanoMeltanoPy)
     },
   }
 }
@@ -462,8 +465,8 @@ export const getDagsterDbtConfig = (projectName: string): ToolConfig => {
     },
     postInit: async () => {
       // Add the connection code
-      await Bun.write(`./${projectName}/dagster/${projectName}/dbt_assets.py`, './src/cli/templates/dagster-dbt/dbt_assets.py')
-      await Bun.write(`./${projectName}/dagster/${projectName}/__init__.py`, './src/cli/templates/dagster-dbt/__init__.py')
+      await Bun.write(`./${projectName}/dagster/${projectName}/dbt_assets.py`, dagsterDbtDbtAssetsPy)
+      await Bun.write(`./${projectName}/dagster/${projectName}/__init__.py`, dagsterDbtInitPy)
     },
   }
 }

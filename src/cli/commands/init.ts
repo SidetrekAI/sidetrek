@@ -69,7 +69,7 @@ export default async function init(options: any) {
         }
       },
       outro: async () => {
-        const outroMessage = colors.sidetrekPurple(`You're all set - enjoy building your new data project! 🚀`) +  colors.sidetrekLightPurple('\n   (Next: Check out the quickstart tutorial at https://sidetrek.com/docs)')
+        const outroMessage = colors.sidetrekPurple(`You're all set - enjoy building your new data project! 🚀`) +  colors.sidetrekLightPurple('\n\n   (Next up - Check out the quickstart tutorial at https://sidetrek.com/docs)')
         return await p.outro(outroMessage)
       },
     },

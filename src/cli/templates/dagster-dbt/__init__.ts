@@ -1,4 +1,4 @@
-import os
+const pyContent = `import os
 
 from dagster import Definitions
 from dagster_dbt import DbtCliResource
@@ -11,4 +11,6 @@ defs = Definitions(
     resources={
         "dbt": DbtCliResource(project_dir=os.fspath(dbt_project_dir)),
     },
-)
+)`
+
+export default pyContent
