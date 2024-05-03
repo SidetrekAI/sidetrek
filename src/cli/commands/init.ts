@@ -15,6 +15,7 @@ export default async function init(options: any) {
    *
    *    - Python 3.10-3.11
    *    - Poetry
+   *    - git (for Superset)
    *
    */
 
@@ -26,7 +27,7 @@ export default async function init(options: any) {
       intro: () => p.intro(colors.sidetrekPurple(`🔥 Let's create a new data project!`)),
       prerequisites: async ({ results }) => {
         return await p.confirm({
-          message: `Sidetrek requires ${chalk.underline.yellow('Python 3.10-3.11')} and ${chalk.underline.yellow('Poetry')} installed. Are you ready to continue?`,
+          message: `Sidetrek requires ${chalk.underline.yellow('Python 3.10-3.11')}, ${chalk.underline.yellow('Poetry')}, and git CLI installed. Are you ready to continue?`,
         })
       },
       pythonVersion: async ({ results }) => {

@@ -1,5 +1,7 @@
 import {
   getDagsterConfig,
+  getDagsterDbtConfig,
+  getDagsterMeltanoConfig,
   getDbtConfig,
   getMeltanoConfig,
   getSupersetConfig,
@@ -15,9 +17,10 @@ export const initTool = async (projectName: string, toolId: string): Promise<Too
     dbt: getDbtConfig(projectName),
     trino: getTrinoConfig(projectName),
     superset: getSupersetConfig(projectName),
+    'dagster-meltano': getDagsterMeltanoConfig(projectName),
+    'dagster-dbt': getDagsterDbtConfig(projectName),
   }
 
-  // Initialize the tool (if necessary)
   const config = toolConfigs[toolId]
   const { id, name } = config
 
