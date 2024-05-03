@@ -157,21 +157,33 @@ export const createDockerComposeFile = async (dockerComposeObj: any, filePath: s
   return await execShell(`echo '${dockerComposeYaml}' > ${filePath}`)
 }
 
+// IDEMPOTENT
 export const createOrUpdateEnvFile = async (envFilePath: string, envFileObj: EnvFileObj): Promise<ShellResponse> => {
   if (!envFilePath) throw new Error('No env file path provided')
   if (!envFileObj) throw new Error('No env file object provided')
 
   const dockerEnv = Bun.file(envFilePath)
-  const dockerEnvStr = await dockerEnv.text()
-  const existingEnvFileObj: EnvFileObj = dockerEnvStr.split('\n').reduce((acc, curr) => {
-    const [key, value] = curr.split('=')
-    return { ...acc, [key]: value }
-  }, {})
-  const editedEnvFileObj: EnvFileObj = { ...existingEnvFileObj, ...envFileObj }
-  const editedEnvFileStr = R.compose(
-    R.join('\n'),
-    R.map(([k, v]) => `${k}=${v}`),
-    R.toPairs
-  )(editedEnvFileObj)
-  return await execShell(`echo '${editedEnvFileStr}' > ${envFilePath}`)
+
+  // If the env file doesn't exist, create it
+  if (!(await dockerEnv.exists())) {
+    const envFileStr = R.compose(
+      R.join('\n'),
+      R.map(([k, v]) => `${k}=${v}`),
+      R.toPairs
+    )(envFileObj)
+    return await execShell(`echo '${envFileStr}' > ${envFilePath}`)
+  } else {
+    const dockerEnvStr = await dockerEnv.text()
+    const existingEnvFileObj: EnvFileObj = dockerEnvStr.split('\n').reduce((acc, curr) => {
+      const [key, value] = curr.split('=')
+      return { ...acc, [key]: value }
+    }, {})
+    const editedEnvFileObj: EnvFileObj = { ...existingEnvFileObj, ...envFileObj }
+    const editedEnvFileStr = R.compose(
+      R.join('\n'),
+      R.map(([k, v]) => `${k}=${v}`),
+      R.toPairs
+    )(editedEnvFileObj)
+    return await execShell(`echo '${editedEnvFileStr}' > ${envFilePath}`)
+  }
 }
