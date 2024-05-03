@@ -107,57 +107,57 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    *
    */
 
-  // // Set up Dagster
-  // s.start('Setting up Dagster (this may take a couple minutes)')
-  // const dagsterInitStartTime = startStopwatch()
-  // const dagsterInitResp = await initTool(projectName, 'dagster')
+  // Set up Dagster
+  s.start('Setting up Dagster (this may take a couple minutes)')
+  const dagsterInitStartTime = startStopwatch()
+  const dagsterInitResp = await initTool(projectName, 'dagster')
 
-  // if (dagsterInitResp?.error) {
-  //   const errorMessage = `Sorry, something went wrong while intializing Dagster.\n\n${dagsterInitResp.error?.stderr}`
-  //   exitOnError(errorMessage)
-  // } else {
-  //   const dagsterInitDuration = endStopwatch(dagsterInitStartTime)
-  //   s.stop('Dagster set up successfully.' + chalk.gray(` [${dagsterInitDuration}ms]`))
-  // }
+  if (dagsterInitResp?.error) {
+    const errorMessage = `Sorry, something went wrong while intializing Dagster.\n\n${dagsterInitResp.error?.stderr}`
+    exitOnError(errorMessage)
+  } else {
+    const dagsterInitDuration = endStopwatch(dagsterInitStartTime)
+    s.stop('Dagster set up successfully.' + chalk.gray(` [${dagsterInitDuration}ms]`))
+  }
 
-  // // Set up Meltano
-  // s.start('Setting up Meltano (this may take a couple minutes)')
-  // const meltanoInitStartTime = startStopwatch()
-  // const meltanoInitResp = await initTool(projectName, 'meltano')
+  // Set up Meltano
+  s.start('Setting up Meltano (this may take a couple minutes)')
+  const meltanoInitStartTime = startStopwatch()
+  const meltanoInitResp = await initTool(projectName, 'meltano')
 
-  // if (meltanoInitResp?.error) {
-  //   const errorMessage = `Sorry, something went wrong while intializing Meltano.\n\n${meltanoInitResp.error?.stderr}`
-  //   exitOnError(errorMessage)
-  // } else {
-  //   const meltanoInitDuration = endStopwatch(meltanoInitStartTime)
-  //   s.stop('Meltano set up successfully.' + chalk.gray(` [${meltanoInitDuration}ms]`))
-  // }
+  if (meltanoInitResp?.error) {
+    const errorMessage = `Sorry, something went wrong while intializing Meltano.\n\n${meltanoInitResp.error?.stderr}`
+    exitOnError(errorMessage)
+  } else {
+    const meltanoInitDuration = endStopwatch(meltanoInitStartTime)
+    s.stop('Meltano set up successfully.' + chalk.gray(` [${meltanoInitDuration}ms]`))
+  }
 
-  // // Set up DBT
-  // s.start('Setting up DBT (this may take a couple minutes)')
-  // const dbtInitStartTime = startStopwatch()
-  // const dbtInitResp = await initTool(projectName, 'dbt')
+  // Set up DBT
+  s.start('Setting up DBT (this may take a couple minutes)')
+  const dbtInitStartTime = startStopwatch()
+  const dbtInitResp = await initTool(projectName, 'dbt')
 
-  // if (dbtInitResp?.error) {
-  //   const errorMessage = `Sorry, something went wrong while intializing DBT.\n\n${dbtInitResp.error?.stderr}`
-  //   exitOnError(errorMessage)
-  // } else {
-  //   const dbtInitDuration = endStopwatch(dbtInitStartTime)
-  //   s.stop('DBT set up successfully.' + chalk.gray(` [${dbtInitDuration}ms]`))
-  // }
+  if (dbtInitResp?.error) {
+    const errorMessage = `Sorry, something went wrong while intializing DBT.\n\n${dbtInitResp.error?.stderr}`
+    exitOnError(errorMessage)
+  } else {
+    const dbtInitDuration = endStopwatch(dbtInitStartTime)
+    s.stop('DBT set up successfully.' + chalk.gray(` [${dbtInitDuration}ms]`))
+  }
 
-  // // Set up Trino
-  // s.start('Setting up Trino (this may take a couple minutes)')
-  // const trinoInitStartTime = startStopwatch()
-  // const trinoInitResp = await initTool(projectName, 'trino')
+  // Set up Trino
+  s.start('Setting up Trino (this may take a couple minutes)')
+  const trinoInitStartTime = startStopwatch()
+  const trinoInitResp = await initTool(projectName, 'trino')
 
-  // if (trinoInitResp?.error) {
-  //   const errorMessage = `Sorry, something went wrong while intializing Trino.\n\n${trinoInitResp.error?.stderr}`
-  //   exitOnError(errorMessage)
-  // } else {
-  //   const trinoInitDuration = endStopwatch(trinoInitStartTime)
-  //   s.stop('Trino set up successfully.' + chalk.gray(` [${trinoInitDuration}ms]`))
-  // }
+  if (trinoInitResp?.error) {
+    const errorMessage = `Sorry, something went wrong while intializing Trino.\n\n${trinoInitResp.error?.stderr}`
+    exitOnError(errorMessage)
+  } else {
+    const trinoInitDuration = endStopwatch(trinoInitStartTime)
+    s.stop('Trino set up successfully.' + chalk.gray(` [${trinoInitDuration}ms]`))
+  }
 
   // Set up Superset
   s.start('Setting up Superset (this may take a few minutes)')
