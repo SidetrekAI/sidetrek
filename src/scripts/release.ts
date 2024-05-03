@@ -1,4 +1,20 @@
 import { $ } from 'bun'
+import { parseArgs } from 'util'
+
+// bun run args
+const { values, positionals } = parseArgs({
+  args: Bun.argv,
+  options: {
+    production: {
+      type: 'boolean',
+      default: false,
+    },
+  },
+  strict: true,
+  allowPositionals: true,
+})
+const { production } = values
+console.log('Is production release:', production)
 
 const tempBuildDirPath = './temp/sidetrek'
 const cwd = process.cwd()
@@ -7,6 +23,7 @@ const handleError = (err: any) => {
   console.log(`Failed with code ${err.exitCode}`)
   console.log(err.stdout.toString())
   console.log(err.stderr.toString())
+  process.exit(err.exitCode)
 }
 
 const createDirs = async () => {
@@ -49,6 +66,10 @@ const getPackageVersion = async () => {
   return contents.version
 }
 
+const runGithubRelease = async () => {
+  
+}
+
 const tar = async () => {
   try {
     const version = await getPackageVersion()
@@ -71,6 +92,10 @@ async function main() {
   await incrementVersion()
   await build()
   await tar()
+
+  if (production) {
+    await runGithubRelease()
+  }
 
   // Clean up
   await $`rm -rf ${tempBuildDirPath}`
