@@ -4,15 +4,12 @@ import { getPackageVersion } from '../cli/utils'
 
 const cwd = process.cwd()
 
-type Arch = 'linux-x64' | 'linux-arm64' | 'windows-x64' | 'darwin-x64' | 'darwin-arm64'
-
 // bun run args
-const { values, positionals } = parseArgs({
+const { values: options, positionals } = parseArgs({
   args: Bun.argv,
   options: {
     arch: {
       type: 'string',
-      required: true,
     },
     production: {
       type: 'boolean',
@@ -23,12 +20,15 @@ const { values, positionals } = parseArgs({
   allowPositionals: true,
 })
 
-const arch = values.arch as Arch
-const production = values.production
+const availableArchs = ['linux-x64', 'linux-arm64', 'windows-x64', 'darwin-x64', 'darwin-arm64'] as const
+type Arch = (typeof availableArchs)[number]
+const archOption = options.arch as Arch | undefined
 
-console.log('Is production release:', production)
-
+const productionOption = options.production as boolean
+const version = await getPackageVersion()
 const tempBuildDirPath = './temp/sidetrek'
+
+console.log('Is production release:', productionOption)
 
 const handleError = (err: any) => {
   console.log(`Failed with code ${err.exitCode}`)
@@ -60,29 +60,19 @@ const incrementVersion = async () => {
   }
 }
 
-const build = async () => {
-  if (!arch) {
-    console.error('--arch is required')
+const build = async (arch: Arch) => {
+  const target = `bun-${arch}`
+
+  if (!target) {
+    console.error('Invalid --arch: please use one of linux-x64, linux-arm64, windows-x64, darwin-x64, darwin-arm64')
     process.exit(1)
   }
 
   try {
-    const archToBunTarget = {
-      'linux-x64': 'bun-linux-x64',
-      'linux-arm64': 'bun-linux-arm64',
-      'windows-x64': 'bun-windows-x64',
-      'darwin-x64': 'bun-darwin-x64',
-      'darwin-arm64': 'bun-darwin-arm64',
-    }
-    const target = archToBunTarget[arch]
-
-    if (!target) {
-      console.error('Invalid --arch: please use one of linux-x64, linux-arm64, windows-x64, darwin-x64, darwin-arm64')
-      process.exit(1)
-    }
-
     // Build
-    await $`bun build ./index.ts --compile --minify --sourcemap --target=${target} --outfile ${tempBuildDirPath}/sidetrek`.cwd(cwd)
+    await $`bun build ./index.ts --compile --minify --sourcemap --target=${target} --outfile ${tempBuildDirPath}/${version}-${arch}/sidetrek`.cwd(
+      cwd
+    )
     console.log('Packaged built successfully.')
   } catch (err) {
     console.error('Error building package')
@@ -92,16 +82,14 @@ const build = async () => {
 
 const runGithubRelease = async () => {}
 
-const tar = async () => {
+const tar = async (arch: Arch) => {
   try {
-    const version = await getPackageVersion()
-
     // Copy the release script
-    await $`cp ./src/scripts/install.sh ${tempBuildDirPath}/install.sh`
+    await $`cp ./src/scripts/install.sh ${tempBuildDirPath}/${version}-${arch}/install.sh`
     console.log('Copied release script.')
 
     // Tar
-    await $`tar -czvf ./release/sidetrek.${version}-${arch}.tar.gz -C ${tempBuildDirPath} .`
+    await $`tar -czvf ./release/sidetrek.${version}-${arch}.tar.gz -C ${tempBuildDirPath}/${version}-${arch} .`
     console.log('Tar created successfully.')
   } catch (err) {
     console.error('Error creating tar')
@@ -109,13 +97,20 @@ const tar = async () => {
   }
 }
 
+const buildAndTar = async (arch: Arch) => {
+  await build(arch)
+  await tar(arch)
+}
+
 async function main() {
   await createDirs()
-  await incrementVersion()
-  await build()
-  await tar()
+  // await incrementVersion()
 
-  if (production) {
+  const archsToRelease = archOption ? [archOption] : availableArchs
+  const promises = archsToRelease.map((_arch) => buildAndTar(_arch))
+  await Promise.all(promises)
+
+  if (productionOption) {
     await runGithubRelease()
   }
 

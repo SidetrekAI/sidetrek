@@ -47,6 +47,7 @@ export default async function init(options: any) {
       projectName: async ({ results }) => {
         return await p.text({
           message: 'Awesome! What would you like to name your project?',
+          placeholder: 'my_shiny_new_project',
           validate: validateProjectName,
         })
       },
