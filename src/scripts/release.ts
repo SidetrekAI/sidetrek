@@ -4,10 +4,16 @@ import { getPackageVersion } from '../cli/utils'
 
 const cwd = process.cwd()
 
+type Arch = 'linux-x64' | 'linux-arm64' | 'windows-x64' | 'darwin-x64' | 'darwin-arm64'
+
 // bun run args
 const { values, positionals } = parseArgs({
   args: Bun.argv,
   options: {
+    arch: {
+      type: 'string',
+      required: true,
+    },
     production: {
       type: 'boolean',
       default: false,
@@ -16,7 +22,10 @@ const { values, positionals } = parseArgs({
   strict: true,
   allowPositionals: true,
 })
-const { production } = values
+
+const arch = values.arch as Arch
+const production = values.production
+
 console.log('Is production release:', production)
 
 const tempBuildDirPath = './temp/sidetrek'
@@ -52,9 +61,28 @@ const incrementVersion = async () => {
 }
 
 const build = async () => {
+  if (!arch) {
+    console.error('--arch is required')
+    process.exit(1)
+  }
+
   try {
+    const archToBunTarget = {
+      'linux-x64': 'bun-linux-x64',
+      'linux-arm64': 'bun-linux-arm64',
+      'windows-x64': 'bun-windows-x64',
+      'darwin-x64': 'bun-darwin-x64',
+      'darwin-arm64': 'bun-darwin-arm64',
+    }
+    const target = archToBunTarget[arch]
+
+    if (!target) {
+      console.error('Invalid --arch: please use one of linux-x64, linux-arm64, windows-x64, darwin-x64, darwin-arm64')
+      process.exit(1)
+    }
+
     // Build
-    await $`bun build ./index.ts --compile --minify --sourcemap --outfile ${tempBuildDirPath}/sidetrek`.cwd(cwd)
+    await $`bun build ./index.ts --compile --minify --sourcemap --target=${target} --outfile ${tempBuildDirPath}/sidetrek`.cwd(cwd)
     console.log('Packaged built successfully.')
   } catch (err) {
     console.error('Error building package')
@@ -92,7 +120,7 @@ async function main() {
   }
 
   // Clean up
-  // await $`rm -rf ${tempBuildDirPath}`
+  await $`rm -rf ${tempBuildDirPath}`
   console.log('Done!')
 }
 
