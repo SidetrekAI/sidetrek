@@ -52,7 +52,7 @@ const incrementVersion = async () => {
 const build = async () => {
   try {
     // Build
-    await $`bun build ./index.ts --compile --minify --sourcemap --outfile ${tempBuildDirPath}/sidetrek`
+    await $`bun run prod`.cwd('../../')
     console.log('Packaged built successfully.')
   } catch (err) {
     console.error('Error building package')
@@ -60,9 +60,7 @@ const build = async () => {
   }
 }
 
-const runGithubRelease = async () => {
-  
-}
+const runGithubRelease = async () => {}
 
 const tar = async () => {
   try {
