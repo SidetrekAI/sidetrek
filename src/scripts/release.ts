@@ -2,6 +2,8 @@ import { $ } from 'bun'
 import { parseArgs } from 'util'
 import { getPackageVersion } from '../cli/utils'
 
+const cwd = process.cwd()
+
 // bun run args
 const { values, positionals } = parseArgs({
   args: Bun.argv,
@@ -52,7 +54,7 @@ const incrementVersion = async () => {
 const build = async () => {
   try {
     // Build
-    await $`bun build ./index.ts --compile --minify --sourcemap --outfile ${tempBuildDirPath}/sidetrek`.cwd('../../')
+    await $`bun build ./index.ts --compile --minify --sourcemap --outfile ${tempBuildDirPath}/sidetrek`.cwd(cwd)
     console.log('Packaged built successfully.')
   } catch (err) {
     console.error('Error building package')
