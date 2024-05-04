@@ -101,7 +101,7 @@ const tar = async () => {
     console.log('Copied release script.')
 
     // Tar
-    await $`tar -czvf ./release/sidetrek.${version}.tar.gz -C ${tempBuildDirPath} .`
+    await $`tar -czvf ./release/sidetrek.${version}-${arch}.tar.gz -C ${tempBuildDirPath} .`
     console.log('Tar created successfully.')
   } catch (err) {
     console.error('Error creating tar')
