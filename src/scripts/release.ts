@@ -52,7 +52,7 @@ const incrementVersion = async () => {
 const build = async () => {
   try {
     // Build
-    await $`bun run prod`.cwd('../../')
+    await $`bun build ./index.ts --compile --minify --sourcemap --outfile ${tempBuildDirPath}/sidetrek`.cwd('../../')
     console.log('Packaged built successfully.')
   } catch (err) {
     console.error('Error building package')
