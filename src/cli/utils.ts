@@ -94,17 +94,18 @@ export const resolvePromiseFactoriesSeq = async (promiseFactories: PromiseFactor
 // Execute long running bun shell commands for Clack
 
 interface ExecShellOptions {
+  cwd?: string
   enableLogging?: boolean
 }
 
 export const execShell = async (command: string, options?: ExecShellOptions): Promise<ShellResponse> => {
-  const { enableLogging = false } = options || {}
+  const { cwd = process.cwd(), enableLogging = false } = options || {}
 
   try {
     let counter = 0
 
     // CAVEAT: must wrap the command in raw - otherwise, it won't work properly due to character escaping issues
-    for await (let line of $`${{ raw: command }}`.lines()) {
+    for await (let line of $`${{ raw: command }}`.cwd(cwd).lines()) {
       if (enableLogging) {
         if (counter === 0) {
           clackLog('', { prefix: '\n' })

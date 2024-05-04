@@ -40,22 +40,71 @@ import dagsterMeltanoMeltanoPy from './templates/dagster-meltano/meltano'
 import dagsterDbtDbtAssetsPy from './templates/dagster-dbt/dbt_assets'
 import dagsterDbtInitPy from './templates/dagster-dbt/__init__'
 
+const cwd = process.cwd()
+
 export interface ToolConfig {
   id: string
   name: string
   desc?: string
   version?: string
-  install?: () => Promise<ShellResponse>
-  init?: () => Promise<ShellResponse>
-  postInit?: () => any
-  run?: () => Promise<ShellResponse>
-  ui?: () => any
-  shell?: () => Promise<ShellResponse>
-  dockerComposeObj?: any
+}
+
+interface DagsterConfig extends ToolConfig {
+  install: () => Promise<ShellResponse>
+  init: () => Promise<ShellResponse>
+  postInit: () => any
+  run: () => any
+  ui: () => any
+}
+
+interface MeltanoConfig extends ToolConfig {
+  install: () => Promise<ShellResponse>
+  init: () => Promise<ShellResponse>
+  postInit: () => any
+}
+
+interface DbtConfig extends ToolConfig {
+  install: () => Promise<ShellResponse>
+  init: () => Promise<ShellResponse>
+  postInit: () => any
+}
+
+interface MinioConfig extends ToolConfig {
+  dockerComposeObj: any
+}
+
+interface IcebergConfig extends ToolConfig {
+  dockerComposeObj: any
+}
+
+interface TrinoConfig extends ToolConfig {
+  dockerComposeObj: any
+  postInit: () => any
+  shell: () => any
+}
+
+interface SupersetConfigRunOptions {
+  build?: boolean
+}
+
+interface SupersetConfig extends ToolConfig {
+  init: () => any
+  postInit: () => any
+  run: (options?: SupersetConfigRunOptions) => any
+}
+
+interface DagsterMeltanoConfig extends ToolConfig {
+  install: () => Promise<ShellResponse>
+  postInit: () => any
+}
+
+interface DagsterDbtConfig extends ToolConfig {
+  install: () => Promise<ShellResponse>
+  postInit: () => any
 }
 
 // Dagster
-export const getDagsterConfig = (projectName: string): ToolConfig => {
+export const getDagsterConfig = (projectName: string): DagsterConfig => {
   return {
     id: 'dagster',
     name: 'Dagster',
@@ -68,7 +117,8 @@ export const getDagsterConfig = (projectName: string): ToolConfig => {
     },
     init: async () => {
       return await execShell(
-        `cd ${projectName}/${projectName} && mkdir dagster && cd dagster && poetry run dagster project scaffold --name ${projectName}`
+        `mkdir dagster && cd dagster && poetry run dagster project scaffold --name ${projectName}`,
+        { cwd: `${cwd}/${projectName}/${projectName}` }
       )
     },
     postInit: async () => {
@@ -78,7 +128,9 @@ export const getDagsterConfig = (projectName: string): ToolConfig => {
       await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/.gitignore`, '/history\n/storage\n/logs')
     },
     run: async () => {
-      return await execShell(`poetry run dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`)
+      await $`DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`.cwd(
+        `${cwd}/${projectName}/dagster/${projectName}`
+      )
     },
     ui: async () => {
       await execShell(`open http://localhost:${DAGSTER_HOST_PORT}`)
@@ -87,17 +139,17 @@ export const getDagsterConfig = (projectName: string): ToolConfig => {
 }
 
 // Meltano
-export const getMeltanoConfig = (projectName: string): ToolConfig => {
+export const getMeltanoConfig = (projectName: string): MeltanoConfig => {
   return {
     id: 'meltano',
     name: 'Meltano',
     desc: 'An open-source ingestion tool implementing Singer protocol.',
     version: MELTANO_VERSION,
     install: async () => {
-      return await execShell(`cd ${projectName} && poetry add meltano@${MELTANO_VERSION}`)
+      return await execShell(`poetry add meltano@${MELTANO_VERSION}`, { cwd: `${cwd}/${projectName}` })
     },
     init: async () => {
-      return await execShell(`cd ${projectName}/${projectName} && poetry run meltano init meltano`)
+      return await execShell(`poetry run meltano init meltano`, { cwd: `${cwd}/${projectName}/${projectName}` })
     },
     postInit: async () => {
       // NOTE: .env will be copied from root later
@@ -109,21 +161,21 @@ export const getMeltanoConfig = (projectName: string): ToolConfig => {
 }
 
 // DBT
-export const getDbtConfig = (projectName: string): ToolConfig => {
+export const getDbtConfig = (projectName: string): DbtConfig => {
   return {
     id: 'dbt',
     name: 'DBT',
     desc: 'An open source data transformation tool.',
     version: '0.21.0',
     install: async () => {
-      return await execShell(
-        `cd ${projectName} && poetry add dbt-core@${DBT_CORE_VERSION} dbt-trino@${DBT_TRINO_VERSION}`
-      )
+      return await execShell(`poetry add dbt-core@${DBT_CORE_VERSION} dbt-trino@${DBT_TRINO_VERSION}`, {
+        cwd: `${cwd}/${projectName}`,
+      })
     },
     init: async () => {
-      return await execShell(
-        `cd ${projectName}/${projectName} && mkdir dbt && cd dbt && poetry run dbt init --skip-profile-setup ${projectName}`
-      )
+      return await execShell(`mkdir dbt && cd dbt && poetry run dbt init --skip-profile-setup ${projectName}`, {
+        cwd: `${cwd}/${projectName}/${projectName}`,
+      })
     },
     postInit: async () => {
       // NOTE: dbt adds .gitignore by default - so no need to add it here
@@ -174,7 +226,7 @@ export const getDbtConfig = (projectName: string): ToolConfig => {
 }
 
 // Minio
-export const getMinioConfig = (projectName: string): ToolConfig => {
+export const getMinioConfig = (projectName: string): MinioConfig => {
   const dockerComposeObj = {
     minio: {
       image: 'minio/minio',
@@ -229,7 +281,7 @@ export const getMinioConfig = (projectName: string): ToolConfig => {
 }
 
 // Iceberg
-export const getIcebergConfig = (projectName: string): ToolConfig => {
+export const getIcebergConfig = (projectName: string): IcebergConfig => {
   const dockerComposeObj = {
     'iceberg-rest': {
       image: 'tabulario/iceberg-rest',
@@ -278,7 +330,7 @@ export const getIcebergConfig = (projectName: string): ToolConfig => {
 }
 
 // Trino
-export const getTrinoConfig = (projectName: string): ToolConfig => {
+export const getTrinoConfig = (projectName: string): TrinoConfig => {
   const dockerComposeObj = {
     trino: {
       image: `trinodb/trino:${TRINO_VERSION}`,
@@ -361,7 +413,7 @@ export const getTrinoConfig = (projectName: string): ToolConfig => {
 }
 
 // Superset
-export const getSupersetConfig = (projectName: string): ToolConfig => {
+export const getSupersetConfig = (projectName: string): SupersetConfig => {
   return {
     id: 'superset',
     name: 'Superset',
@@ -379,18 +431,22 @@ export const getSupersetConfig = (projectName: string): ToolConfig => {
       // Remove .git
       await execShell(`rm -rf ./${projectName}/superset/.git`)
     },
+    run: async (options?: SupersetConfigRunOptions) => {
+      const { build = false } = options || {}
+      await $`docker-compose up -d ${build ? '--build' : ''}`.cwd(`${cwd}/superset`)
+    },
   }
 }
 
 // dagster-meltano connector
-export const getDagsterMeltanoConfig = (projectName: string): ToolConfig => {
+export const getDagsterMeltanoConfig = (projectName: string): DagsterMeltanoConfig => {
   return {
     id: 'dagster-meltano',
     name: 'Dagster-Meltano',
     desc: 'Dagster-Meltano connector.',
     version: DAGSTER_MELTANO_VERSION,
     install: async () => {
-      return await execShell(`cd ${projectName} && poetry add dagster-meltano@${DAGSTER_MELTANO_VERSION}`)
+      return await execShell(`poetry add dagster-meltano@${DAGSTER_MELTANO_VERSION}`, { cwd: `${cwd}/${projectName}` })
     },
     postInit: async () => {
       // Add the connection code
@@ -403,14 +459,14 @@ export const getDagsterMeltanoConfig = (projectName: string): ToolConfig => {
 }
 
 // dagster-dbt connector
-export const getDagsterDbtConfig = (projectName: string): ToolConfig => {
+export const getDagsterDbtConfig = (projectName: string): DagsterDbtConfig => {
   return {
     id: 'dagster-dbt',
     name: 'Dagster-DBT',
     desc: 'Dagster-DBT connector.',
     version: DAGSTER_DBT_VERSION,
     install: async () => {
-      return await execShell(`cd ${projectName} && poetry add dagster-dbt@${DAGSTER_DBT_VERSION}`)
+      return await execShell(`poetry add dagster-dbt@${DAGSTER_DBT_VERSION}`, { cwd: `${cwd}/${projectName}` })
     },
     postInit: async () => {
       // Add the connection code

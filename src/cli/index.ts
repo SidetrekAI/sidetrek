@@ -2,7 +2,7 @@ import * as R from 'ramda'
 import { Command } from 'commander'
 import { colors } from './constants'
 import init from './commands/init'
-import dev from './commands/dev'
+import start from './commands/start'
 import logs from './commands/logs'
 import { getPackageVersion } from './utils'
 
@@ -25,17 +25,17 @@ export default async function runCli() {
     .command('init')
     .description('Initialize your project')
     .option('--skip-example', 'Skip the example code')
-    .action((_, options) => {
+    .action((options) => {
       init(options)
     })
 
-  const devCommand = program
-    .command('dev')
-    .description('Start the development server')
+  const startCommand = program
+    .command('start')
+    .description('Start the development services')
     .option('--build', 'Re-build the docker containers')
     .option('--skip <value...>', 'Skip a specific service')
-    .action((_, options) => {
-      dev(options)
+    .action((options) => {
+      start(options)
     })
 
   const logsCommand = program
