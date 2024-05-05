@@ -5,8 +5,8 @@ const cwd = process.cwd()
 
 export default async function down() {
   // Down the core services
-  await $`docker-compose down`
+  await $`docker compose down`
 
   // Down superset
-  await $`docker-compose down`.cwd(`${cwd}/superset`)
+  await $`docker compose down`.cwd(`${cwd}/superset`)
 }

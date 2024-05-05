@@ -11,7 +11,7 @@ export default async function start(options: any) {
   const projectName = path.basename(cwd)
 
   // Run the core services
-  await $`docker-compose up -d ${build ? '--build' : ''}`
+  await $`docker compose up -d ${build ? '--build' : ''}`
 
   // Run superset
   const supersetConfig = getSupersetConfig(projectName)

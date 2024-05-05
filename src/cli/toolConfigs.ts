@@ -436,7 +436,7 @@ export const getSupersetConfig = (projectName: string): SupersetConfig => {
     },
     run: async (options?: SupersetConfigRunOptions) => {
       const { build = false } = options || {}
-      await $`docker-compose up -d ${build ? '--build' : ''}`.cwd(`${cwd}/superset`)
+      await $`docker compose up -d ${build ? '--build' : ''}`.cwd(`${cwd}/superset`)
     },
   }
 }

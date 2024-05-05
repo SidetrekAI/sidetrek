@@ -28,5 +28,5 @@ export default async function logs(service: string | undefined, options: any) {
   // )
   // // REMEMBER that Superset is running separately
   // const cwd = service === 'superset' ? process.cwd() + '/superset' : process.cwd()
-  // $`docker-compose logs ${service}`.cwd(cwd)
+  // $`docker compose logs ${service}`.cwd(cwd)
 }
