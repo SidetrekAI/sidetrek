@@ -142,7 +142,7 @@ export const genDockerfile = () => {}
 
 interface GenDockerComposeArgs {
   projectName: string
-  toolDockerComposeObjs: ToolConfig[]
+  toolDockerComposeObjs: any[]
   volumes: { [key: string]: any }
   networks: { [key: string]: any }
 }

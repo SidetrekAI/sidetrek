@@ -21,6 +21,10 @@ import {
   getMinioConfig,
   getSupersetConfig,
   getTrinoConfig,
+  type IcebergConfig,
+  type MinioConfig,
+  type SupersetConfig,
+  type TrinoConfig,
 } from '../../toolConfigs'
 import type { ToolInitResponse } from '../../types'
 import {
@@ -82,7 +86,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // `poetry new` -> remove tests -> create sidetrek dir
   s.start('Scaffolding your project')
   const poetryNewStartTime = startStopwatch()
-  const poetryNewResp = await execShell(`poetry new ${projectName} && rm -rf ./${projectName}/tests`)
+  const poetryNewResp = await execShell(`poetry new ${projectName} && rm -rf ./${projectName}/tests && mkdir -p ./${projectName}/sidetrek`)
 
   if (poetryNewResp?.error) {
     const errorMessage = `Sorry, something went wrong while scaffolding the project via Poetry.\n\n${poetryNewResp.error?.stderr}`
@@ -93,7 +97,8 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   const pyprojectTomlStr = await $`cat ./${projectName}/pyproject.toml`.text()
   const updatedPyprojectTomlStr = R.compose(
     R.join('\n'),
-    R.map((line) => (line.includes('python = "') ? `python = "~${pythonVersion}.0"` : line)),
+    R.append(`\n\n[tool.dagster]\nmodule_name = "${projectName}"`),
+    R.map((line) => (line.includes('python = "') ? `python = "~${pythonVersion}.0"` : line)), // set the python version
     R.split('\n')
   )(pyprojectTomlStr)
   await Bun.write(`./${projectName}/pyproject.toml`, updatedPyprojectTomlStr) // overwrites
@@ -182,7 +187,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    */
   s.start('Generating docker-compose file')
   const dcStartTime = startStopwatch()
-  const toolConfigs = [
+  const toolConfigs: any[] = [
     getMinioConfig(projectName),
     getIcebergConfig(projectName),
     getTrinoConfig(projectName),

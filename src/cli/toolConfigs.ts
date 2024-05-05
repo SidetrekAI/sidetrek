@@ -49,7 +49,7 @@ export interface ToolConfig {
   version?: string
 }
 
-interface DagsterConfig extends ToolConfig {
+export interface DagsterConfig extends ToolConfig {
   install: () => Promise<ShellResponse>
   init: () => Promise<ShellResponse>
   postInit: () => any
@@ -57,27 +57,27 @@ interface DagsterConfig extends ToolConfig {
   ui: () => any
 }
 
-interface MeltanoConfig extends ToolConfig {
+export interface MeltanoConfig extends ToolConfig {
   install: () => Promise<ShellResponse>
   init: () => Promise<ShellResponse>
   postInit: () => any
 }
 
-interface DbtConfig extends ToolConfig {
+export interface DbtConfig extends ToolConfig {
   install: () => Promise<ShellResponse>
   init: () => Promise<ShellResponse>
   postInit: () => any
 }
 
-interface MinioConfig extends ToolConfig {
+export interface MinioConfig extends ToolConfig {
   dockerComposeObj: any
 }
 
-interface IcebergConfig extends ToolConfig {
+export interface IcebergConfig extends ToolConfig {
   dockerComposeObj: any
 }
 
-interface TrinoConfig extends ToolConfig {
+export interface TrinoConfig extends ToolConfig {
   dockerComposeObj: any
   postInit: () => any
   shell: () => any
@@ -87,18 +87,18 @@ interface SupersetConfigRunOptions {
   build?: boolean
 }
 
-interface SupersetConfig extends ToolConfig {
+export interface SupersetConfig extends ToolConfig {
   init: () => any
   postInit: () => any
   run: (options?: SupersetConfigRunOptions) => any
 }
 
-interface DagsterMeltanoConfig extends ToolConfig {
+export interface DagsterMeltanoConfig extends ToolConfig {
   install: () => Promise<ShellResponse>
   postInit: () => any
 }
 
-interface DagsterDbtConfig extends ToolConfig {
+export interface DagsterDbtConfig extends ToolConfig {
   install: () => Promise<ShellResponse>
   postInit: () => any
 }
@@ -111,15 +111,20 @@ export const getDagsterConfig = (projectName: string): DagsterConfig => {
     desc: 'A data orchestrator for machine learning, analytics, and ETL.',
     version: DAGSTER_VERSION,
     install: async () => {
-      return await execShell(
-        `cd ${projectName} && poetry add dagster@${DAGSTER_VERSION} dagster-webserver@${DAGSTER_VERSION}`
-      )
+      return await execShell(`poetry add dagster@${DAGSTER_VERSION} dagster-webserver@${DAGSTER_VERSION}`, {
+        cwd: `${cwd}/${projectName}`,
+      })
     },
     init: async () => {
-      return await execShell(
-        `mkdir dagster && cd dagster && poetry run dagster project scaffold --name ${projectName}`,
-        { cwd: `${cwd}/${projectName}/${projectName}` }
-      )
+      // Scaffold the dagster project
+      await execShell(`mkdir dagster && cd dagster && poetry run dagster project scaffold --name ${projectName}`, {
+        cwd: `${cwd}/${projectName}/${projectName}`,
+      })
+
+      // Install dependencies
+      return await execShell(`pip install -e ".[dev]"`, {
+        cwd: `${cwd}/${projectName}/${projectName}/dagster/${projectName}`,
+      })
     },
     postInit: async () => {
       // NOTE: .env will be copied from root later
@@ -128,9 +133,7 @@ export const getDagsterConfig = (projectName: string): DagsterConfig => {
       await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/.gitignore`, '/history\n/storage\n/logs')
     },
     run: async () => {
-      await $`DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 poetry run dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`.cwd(
-        `${cwd}/${projectName}/dagster/${projectName}`
-      )
+      await $`DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 poetry run dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`
     },
     ui: async () => {
       await execShell(`open http://localhost:${DAGSTER_HOST_PORT}`)

@@ -3,6 +3,8 @@ import { Command } from 'commander'
 import { colors } from './constants'
 import init from './commands/init'
 import start from './commands/start'
+import stop from './commands/stop'
+import down from './commands/down'
 import logs from './commands/logs'
 import { getPackageVersion } from './utils'
 
@@ -36,6 +38,20 @@ export default async function runCli() {
     .option('--skip <value...>', 'Skip a specific service')
     .action((options) => {
       start(options)
+    })
+
+  const stopCommand = program
+    .command('stop')
+    .description('Stop the development services')
+    .action(() => {
+      stop()
+    })
+
+  const downCommand = program
+    .command('down')
+    .description('Tear down the development services')
+    .action(() => {
+      down()
     })
 
   const logsCommand = program

@@ -104,7 +104,7 @@ const buildAndTar = async (arch: Arch) => {
 
 async function main() {
   await createDirs()
-  // await incrementVersion()
+  await incrementVersion()
 
   const archsToRelease = archOption ? [archOption] : availableArchs
   const promises = archsToRelease.map((_arch) => buildAndTar(_arch))
