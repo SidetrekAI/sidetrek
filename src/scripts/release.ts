@@ -25,7 +25,6 @@ type Arch = (typeof availableArchs)[number]
 const archOption = options.arch as Arch | undefined
 
 const productionOption = options.production as boolean
-const version = await getPackageVersion()
 const tempBuildDirPath = './temp/sidetrek'
 
 console.log('Is production release:', productionOption)
@@ -60,7 +59,7 @@ const incrementVersion = async () => {
   }
 }
 
-const build = async (arch: Arch) => {
+const build = async (version: string, arch: Arch) => {
   const target = `bun-${arch}`
 
   if (!target) {
@@ -80,9 +79,9 @@ const build = async (arch: Arch) => {
   }
 }
 
-const runGithubRelease = async () => {}
+const runGithubRelease = async (version: string) => {}
 
-const tar = async (arch: Arch) => {
+const tar = async (version: string, arch: Arch) => {
   try {
     // Copy the release script
     await $`cp ./src/scripts/install.sh ${tempBuildDirPath}/${version}-${arch}/install.sh`
@@ -97,21 +96,23 @@ const tar = async (arch: Arch) => {
   }
 }
 
-const buildAndTar = async (arch: Arch) => {
-  await build(arch)
-  await tar(arch)
+const buildAndTar = async (version: string, arch: Arch) => {
+  await build(version, arch)
+  await tar(version, arch)
 }
 
 async function main() {
   await createDirs()
   await incrementVersion()
 
+  const version = await getPackageVersion()
+
   const archsToRelease = archOption ? [archOption] : availableArchs
-  const promises = archsToRelease.map((_arch) => buildAndTar(_arch))
+  const promises = archsToRelease.map((_arch) => buildAndTar(version, _arch))
   await Promise.all(promises)
 
   if (productionOption) {
-    await runGithubRelease()
+    await runGithubRelease(version)
   }
 
   // Clean up
