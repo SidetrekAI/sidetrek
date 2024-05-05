@@ -117,14 +117,14 @@ export const getDagsterConfig = (projectName: string): DagsterConfig => {
     },
     init: async () => {
       // Scaffold the dagster project
-      await execShell(`mkdir dagster && cd dagster && poetry run dagster project scaffold --name ${projectName}`, {
+      return await execShell(`mkdir dagster && cd dagster && poetry run dagster project scaffold --name ${projectName}`, {
         cwd: `${cwd}/${projectName}/${projectName}`,
       })
 
-      // Install dependencies
-      return await execShell(`pip install -e ".[dev]"`, {
-        cwd: `${cwd}/${projectName}/${projectName}/dagster/${projectName}`,
-      })
+      // // Install dependencies
+      // return await execShell(`pip install -e ".[dev]"`, {
+      //   cwd: `${cwd}/${projectName}/${projectName}/dagster/${projectName}`,
+      // })
     },
     postInit: async () => {
       // NOTE: .env will be copied from root later
