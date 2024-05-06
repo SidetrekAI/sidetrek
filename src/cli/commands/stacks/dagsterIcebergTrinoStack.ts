@@ -86,7 +86,9 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // `poetry new` -> remove tests -> create sidetrek dir
   s.start('Scaffolding your project')
   const poetryNewStartTime = startStopwatch()
-  const poetryNewResp = await execShell(`poetry new ${projectName} && rm -rf ./${projectName}/tests && mkdir -p ./${projectName}/.sidetrek`)
+  const poetryNewResp = await execShell(
+    `poetry new ${projectName} && rm -rf ./${projectName}/tests && mkdir -p ./${projectName}/.sidetrek`
+  )
 
   if (poetryNewResp?.error) {
     const errorMessage = `Sorry, something went wrong while scaffolding the project via Poetry.\n\n${poetryNewResp.error?.stderr}`
@@ -125,19 +127,6 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     s.stop('Dagster set up successfully.' + chalk.gray(` [${dagsterInitDuration}ms]`))
   }
 
-  // Set up Meltano
-  s.start('Setting up Meltano (this may take a couple minutes)')
-  const meltanoInitStartTime = startStopwatch()
-  const meltanoInitResp = await initTool(projectName, 'meltano')
-
-  if (meltanoInitResp?.error) {
-    const errorMessage = `Sorry, something went wrong while intializing Meltano.\n\n${meltanoInitResp.error?.stderr}`
-    exitOnError(errorMessage)
-  } else {
-    const meltanoInitDuration = endStopwatch(meltanoInitStartTime)
-    s.stop('Meltano set up successfully.' + chalk.gray(` [${meltanoInitDuration}ms]`))
-  }
-
   // Set up DBT
   s.start('Setting up DBT (this may take a couple minutes)')
   const dbtInitStartTime = startStopwatch()
@@ -149,6 +138,20 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   } else {
     const dbtInitDuration = endStopwatch(dbtInitStartTime)
     s.stop('DBT set up successfully.' + chalk.gray(` [${dbtInitDuration}ms]`))
+  }
+
+  // Set up Meltano
+  // IMPORTANT: Meltano must be set up AFTER DBT for now due to snowplow tracker bug
+  s.start('Setting up Meltano (this may take a couple minutes)')
+  const meltanoInitStartTime = startStopwatch()
+  const meltanoInitResp = await initTool(projectName, 'meltano')
+
+  if (meltanoInitResp?.error) {
+    const errorMessage = `Sorry, something went wrong while intializing Meltano.\n\n${meltanoInitResp.error?.stderr}`
+    exitOnError(errorMessage)
+  } else {
+    const meltanoInitDuration = endStopwatch(meltanoInitStartTime)
+    s.stop('Meltano set up successfully.' + chalk.gray(` [${meltanoInitDuration}ms]`))
   }
 
   // Set up Trino

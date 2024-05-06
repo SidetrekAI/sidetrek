@@ -149,7 +149,6 @@ interface GenDockerComposeArgs {
 
 export const genDockerCompose = ({ toolDockerComposeObjs, volumes, networks }: GenDockerComposeArgs): any => {
   return {
-    version: '3',
     services: {
       ...toolDockerComposeObjs.reduce((acc, curr) => ({ ...acc, ...curr }), {}),
     },
