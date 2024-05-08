@@ -120,15 +120,9 @@ export const getDagsterConfig = (projectName: string): DagsterConfig => {
       return await execShell(`mkdir dagster && cd dagster && poetry run dagster project scaffold --name ${projectName}`, {
         cwd: `${cwd}/${projectName}/${projectName}`,
       })
-
-      // // Install dependencies
-      // return await execShell(`pip install -e ".[dev]"`, {
-      //   cwd: `${cwd}/${projectName}/${projectName}/dagster/${projectName}`,
-      // })
     },
     postInit: async () => {
       // NOTE: .env will be copied from root later
-
       // Add .gitignore
       await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/.gitignore`, '/history\n/storage\n/logs')
     },
@@ -195,7 +189,7 @@ export const getDbtConfig = (projectName: string): DbtConfig => {
               type: 'trino',
               user: 'trino',
               host: 'trino',
-              port: TRINO_HOST_PORT,
+              port: parseInt(TRINO_HOST_PORT),
               database: 'iceberg',
               schema: 'project',
               http_scheme: 'http',

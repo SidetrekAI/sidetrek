@@ -98,8 +98,8 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // Must update the pyproject.toml file to set the correct python version
   const pyprojectTomlStr = await $`cat ./${projectName}/pyproject.toml`.text()
   const updatedPyprojectTomlStr = R.compose(
-    R.join('\n'),
-    R.append(`\n\n[tool.dagster]\nmodule_name = "${projectName}"`),
+    R.join('\n'), 
+    R.append(`\n\n[tool.dagster]\nmodule_name = "${projectName}.dagster.${projectName}.${projectName}"\n`),
     R.map((line) => (line.includes('python = "') ? `python = "~${pythonVersion}.0"` : line)), // set the python version
     R.split('\n')
   )(pyprojectTomlStr)
@@ -141,7 +141,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   }
 
   // Set up Meltano
-  // IMPORTANT: Meltano must be set up AFTER DBT for now due to snowplow tracker bug
+  // IMPORTANT: Meltano must be set up BEFORE DBT for now due to snowplow tracker bug
   s.start('Setting up Meltano (this may take a couple minutes)')
   const meltanoInitStartTime = startStopwatch()
   const meltanoInitResp = await initTool(projectName, 'meltano')
