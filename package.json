@@ -1,6 +1,6 @@
 {
   "name": "sidetrek-cli",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "module": "index.ts",
   "type": "module",
   "scripts": {
