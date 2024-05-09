@@ -180,3 +180,4 @@ dist
 playground.ts
 /temp
 /release
+/test_proj*

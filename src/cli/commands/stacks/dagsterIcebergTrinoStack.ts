@@ -42,14 +42,12 @@ import {
   PROJECT_DIRNAME_ENVNAME,
   TRINO_USER_ENVNAME,
   ICEBERG_CATALOG_NAME_ENVNAME,
-  MINIO_SERVER_HOST_PORT,
-  PYICEBERG_CATALOG__ICEBERGCATALOG__URI_ENVNAME,
-  PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ENDPOINT_ENVNAME,
-  PYICEBERG_CATALOG__ICEBERGCATALOG__PY_IO_IMPL_ENVNAME,
-  PYICEBERG_CATALOG__ICEBERGCATALOG__S3__REGION_ENVNAME,
-  PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ACCESS_KEY_ID_ENVNAME,
-  PYICEBERG_CATALOG__ICEBERGCATALOG__S3__SECRET_ACCESS_KEY_ENVNAME,
-  ICEBERG_REST_HOST_PORT,
+  S3_ENDPOINT,
+  AWS_REGION,
+  AWS_ACCESS_KEY_ID,
+  AWS_SECRET_ACCESS_KEY,
+  LAKEHOUSE_NAME,
+  ICEBERG_CATALOG_NAME,
   DAGSTER_HOME_ENVNAME,
 } from '../../constants'
 import gitignore from '../../templates/gitignore'
@@ -98,7 +96,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // Must update the pyproject.toml file to set the correct python version
   const pyprojectTomlStr = await $`cat ./${projectName}/pyproject.toml`.text()
   const updatedPyprojectTomlStr = R.compose(
-    R.join('\n'), 
+    R.join('\n'),
     R.append(`\n\n[tool.dagster]\nmodule_name = "${projectName}.dagster.${projectName}.${projectName}"\n`),
     R.map((line) => (line.includes('python = "') ? `python = "~${pythonVersion}.0"` : line)), // set the python version
     R.split('\n')
@@ -226,38 +224,37 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   s.start('Setting up other project level configurations')
   const envsStartTime = startStopwatch()
 
-  const S3_ENDPOINT = `http://minio:${MINIO_SERVER_HOST_PORT}`
-  const AWS_REGION = 'us-west-2'
-  const AWS_ACCESS_KEY_ID = 'admin'
-  const AWS_SECRET_ACCESS_KEY = 'admin_secret'
-
-  const envFileObj = {
-    [PROJECT_DIRNAME_ENVNAME]: `${projectName}`,
+  // Create root .env file
+  const rootEnvFileObj = {
+    [PROJECT_DIRNAME_ENVNAME]: projectName,
     [DAGSTER_HOME_ENVNAME]: `${process.cwd()}/${projectName}/${projectName}/dagster/${projectName}`,
-    [AWS_REGION_ENVNAME]: `${AWS_REGION}`,
-    [AWS_ACCESS_KEY_ID_ENVNAME]: `${AWS_ACCESS_KEY_ID}`,
-    [AWS_SECRET_ACCESS_KEY_ENVNAME]: `${AWS_SECRET_ACCESS_KEY}`,
-    [LAKEHOUSE_NAME_ENVNAME]: `lakehouse`,
-    [S3_ENDPOINT_ENVNAME]: `${S3_ENDPOINT}`,
-    [ICEBERG_CATALOG_NAME_ENVNAME]: `icebergcatalog`,
+    [AWS_REGION_ENVNAME]: AWS_REGION,
+    [AWS_ACCESS_KEY_ID_ENVNAME]: AWS_ACCESS_KEY_ID,
+    [AWS_SECRET_ACCESS_KEY_ENVNAME]: AWS_SECRET_ACCESS_KEY,
+    [LAKEHOUSE_NAME_ENVNAME]: LAKEHOUSE_NAME,
+    [S3_ENDPOINT_ENVNAME]: S3_ENDPOINT,
+    [ICEBERG_CATALOG_NAME_ENVNAME]: ICEBERG_CATALOG_NAME,
     [ICEBERG_PG_CATALOG_USER_ENVNAME]: `iceberg`,
     [ICEBERG_PG_CATALOG_PASSWORD_ENVNAME]: `iceberg`,
     [ICEBERG_PG_CATALOG_DB_ENVNAME]: `iceberg`,
-    [TRINO_USER_ENVNAME]: `admin`,
-    [PYICEBERG_CATALOG__ICEBERGCATALOG__URI_ENVNAME]: `http://iceberg-rest:${ICEBERG_REST_HOST_PORT}`,
-    [PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ENDPOINT_ENVNAME]: `${S3_ENDPOINT}`,
-    [PYICEBERG_CATALOG__ICEBERGCATALOG__PY_IO_IMPL_ENVNAME]: `pyiceberg.io.pyarrow.PyArrowFileIO`,
-    [PYICEBERG_CATALOG__ICEBERGCATALOG__S3__REGION_ENVNAME]: `${AWS_REGION}`,
-    [PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ACCESS_KEY_ID_ENVNAME]: `${AWS_ACCESS_KEY_ID}`,
-    [PYICEBERG_CATALOG__ICEBERGCATALOG__S3__SECRET_ACCESS_KEY_ENVNAME]: `${AWS_SECRET_ACCESS_KEY}`,
   }
-  await createOrUpdateEnvFile(`./${projectName}/.env`, envFileObj)
+  await createOrUpdateEnvFile(`./${projectName}/.env`, rootEnvFileObj)
 
   await Bun.write(`./${projectName}/.gitignore`, gitignore)
 
-  // // Copy the .env file to /dagster and /meltano
-  await createOrUpdateEnvFile(`./${projectName}/${projectName}/dagster/${projectName}/.env`, envFileObj)
-  await createOrUpdateEnvFile(`./${projectName}/${projectName}/meltano/.env`, envFileObj)
+  // Create dagster .env file
+  const dagsterEnvFileObj = {
+    [PROJECT_DIRNAME_ENVNAME]: `${projectName}`,
+    [TRINO_USER_ENVNAME]: `admin`,
+  }
+  await createOrUpdateEnvFile(`./${projectName}/${projectName}/dagster/${projectName}/.env`, dagsterEnvFileObj)
+
+  // Create meltano .env file
+  const meltanoEnvFileObj = {
+    [AWS_ACCESS_KEY_ID_ENVNAME]: `${AWS_ACCESS_KEY_ID}`,
+    [AWS_SECRET_ACCESS_KEY_ENVNAME]: `${AWS_SECRET_ACCESS_KEY}`,
+  }
+  await createOrUpdateEnvFile(`./${projectName}/${projectName}/meltano/.env`, meltanoEnvFileObj)
 
   const envsDuration = endStopwatch(envsStartTime)
   s.stop('Successfully set up other project level configurations.' + chalk.gray(` [${envsDuration}ms]`))

@@ -7,8 +7,8 @@
     "start": "bun run index.ts",
     "dev": "bun build ./index.ts --compile --sourcemap --outfile ./build/sidetrek --watch && rm -rf ./*.bun-build",
     "build": "bun build ./index.ts --compile --sourcemap --outfile ./build/sidetrek",
-    "release": "bun run ./src/scripts/release.ts --production",
-    "local-release": "bun run ./src/scripts/release.ts"
+    "release": "bun run ./src/scripts/release.ts",
+    "prod-release": "bun run ./src/scripts/release.ts --production"
   },
   "devDependencies": {
     "@types/bun": "^1.1.0",

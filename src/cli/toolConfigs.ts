@@ -36,9 +36,9 @@ import {
   TRINO_HOST_PORT,
   TRINO_VERSION,
 } from './constants'
-import dagsterMeltanoMeltanoPy from './templates/dagster-meltano/meltano'
-import dagsterDbtDbtAssetsPy from './templates/dagster-dbt/dbt_assets'
-import dagsterDbtInitPy from './templates/dagster-dbt/__init__'
+import dagsterMeltanoMeltanoPy from './templates/dagster-meltano/meltano.py'
+import dagsterDbtDbtAssetsPy from './templates/dagster-dbt/dbt_assets.py'
+import dagsterDbtInitPy from './templates/dagster-dbt/__init__.py'
 
 const cwd = process.cwd()
 
@@ -117,9 +117,12 @@ export const getDagsterConfig = (projectName: string): DagsterConfig => {
     },
     init: async () => {
       // Scaffold the dagster project
-      return await execShell(`mkdir dagster && cd dagster && poetry run dagster project scaffold --name ${projectName}`, {
-        cwd: `${cwd}/${projectName}/${projectName}`,
-      })
+      return await execShell(
+        `mkdir dagster && cd dagster && poetry run dagster project scaffold --name ${projectName}`,
+        {
+          cwd: `${cwd}/${projectName}/${projectName}`,
+        }
+      )
     },
     postInit: async () => {
       // NOTE: .env will be copied from root later
@@ -233,13 +236,22 @@ export const getMinioConfig = (projectName: string): MinioConfig => {
       environment: [
         'MINIO_ROOT_USER=${' + AWS_ACCESS_KEY_ID_ENVNAME + '}',
         'MINIO_ROOT_PASSWORD=${' + AWS_SECRET_ACCESS_KEY_ENVNAME + '}',
+        'MINIO_DOMAIN=minio', // This is required to allow iceberg-rest to connect to minio
       ],
       ports: [
         `${MINIO_SERVER_HOST_PORT}:${MINIO_SERVER_CONTAINER_PORT}`,
         `${MINIO_UI_HOST_PORT}:${MINIO_UI_CONTAINER_PORT}`,
       ],
       volumes: [`${MINIO_VOLUME_NAME}:/data`],
-      networks: [SHARED_NETWORK_NAME],
+      networks: {
+        [SHARED_NETWORK_NAME]: {
+          // This is required to allow iceberg-rest to connect to minio (due to path-style-access setting changes in aws sdk)
+          // See: https://github.com/tabular-io/docker-spark-iceberg/pull/72
+          aliases: [
+            '${LAKEHOUSE_NAME}.minio', 
+          ],
+        },
+      },
     },
     mc: {
       image: 'minio/mc',

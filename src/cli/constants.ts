@@ -42,6 +42,13 @@ export const TRINO_VERSION = '437'
 export const TRINO_HOST_PORT = '8081'
 export const TRINO_CONTAINER_PORT = '8080'
 
+export const S3_ENDPOINT = `http://minio:${MINIO_SERVER_HOST_PORT}`
+export const AWS_REGION = 'us-west-2'
+export const AWS_ACCESS_KEY_ID = 'admin'
+export const AWS_SECRET_ACCESS_KEY = 'admin_secret'
+export const LAKEHOUSE_NAME = 'lakehouse'
+export const ICEBERG_CATALOG_NAME = 'icebergcatalog'
+
 export const AWS_REGION_ENVNAME = 'AWS_REGION'
 export const AWS_ACCESS_KEY_ID_ENVNAME = 'AWS_ACCESS_KEY_ID'
 export const AWS_SECRET_ACCESS_KEY_ENVNAME = 'AWS_SECRET_ACCESS_KEY'
