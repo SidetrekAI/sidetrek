@@ -47,9 +47,16 @@ export interface ToolConfig {
   name: string
   desc?: string
   version?: string
+  install?: () => Promise<ShellResponse>
+  init?: () => Promise<ShellResponse>
+  postInit?: () => any
+  run?: () => any
+  ui?: () => any
 }
 
-export interface DagsterConfig extends ToolConfig {
+type MinimalToolConfig = Omit<ToolConfig, 'install' | 'init' | 'postInit' | 'run' | 'ui'>
+
+export interface DagsterConfig extends MinimalToolConfig {
   install: () => Promise<ShellResponse>
   init: () => Promise<ShellResponse>
   postInit: () => any
@@ -57,27 +64,27 @@ export interface DagsterConfig extends ToolConfig {
   ui: () => any
 }
 
-export interface MeltanoConfig extends ToolConfig {
+export interface MeltanoConfig extends MinimalToolConfig {
   install: () => Promise<ShellResponse>
   init: () => Promise<ShellResponse>
   postInit: () => any
 }
 
-export interface DbtConfig extends ToolConfig {
+export interface DbtConfig extends MinimalToolConfig {
   install: () => Promise<ShellResponse>
   init: () => Promise<ShellResponse>
   postInit: () => any
 }
 
-export interface MinioConfig extends ToolConfig {
+export interface MinioConfig extends MinimalToolConfig {
   dockerComposeObj: any
 }
 
-export interface IcebergConfig extends ToolConfig {
+export interface IcebergConfig extends MinimalToolConfig {
   dockerComposeObj: any
 }
 
-export interface TrinoConfig extends ToolConfig {
+export interface TrinoConfig extends MinimalToolConfig {
   dockerComposeObj: any
   postInit: () => any
   shell: () => any
@@ -87,18 +94,18 @@ interface SupersetConfigRunOptions {
   build?: boolean
 }
 
-export interface SupersetConfig extends ToolConfig {
+export interface SupersetConfig extends MinimalToolConfig {
   init: () => any
   postInit: () => any
   run: (options?: SupersetConfigRunOptions) => any
 }
 
-export interface DagsterMeltanoConfig extends ToolConfig {
+export interface DagsterMeltanoConfig extends MinimalToolConfig {
   install: () => Promise<ShellResponse>
   postInit: () => any
 }
 
-export interface DagsterDbtConfig extends ToolConfig {
+export interface DagsterDbtConfig extends MinimalToolConfig {
   install: () => Promise<ShellResponse>
   postInit: () => any
 }
@@ -191,7 +198,7 @@ export const getDbtConfig = (projectName: string): DbtConfig => {
             dev: {
               type: 'trino',
               user: 'trino',
-              host: 'trino',
+              host: 'localhost',
               port: parseInt(TRINO_HOST_PORT),
               database: 'iceberg',
               schema: 'project',
@@ -247,9 +254,7 @@ export const getMinioConfig = (projectName: string): MinioConfig => {
         [SHARED_NETWORK_NAME]: {
           // This is required to allow iceberg-rest to connect to minio (due to path-style-access setting changes in aws sdk)
           // See: https://github.com/tabular-io/docker-spark-iceberg/pull/72
-          aliases: [
-            '${LAKEHOUSE_NAME}.minio', 
-          ],
+          aliases: ['${LAKEHOUSE_NAME}.minio'],
         },
       },
     },
@@ -437,12 +442,27 @@ export const getSupersetConfig = (projectName: string): SupersetConfig => {
         SUPERSET_ENV: 'production',
       })
 
+      // Add requirements-local.txt with trino
+      await Bun.write(`${projectName}/superset/docker/requirements-local.txt`, 'trino')
+
+      // Add extra_host to superset docker-compose-image-tag.yml
+      const dockerComposeImageTagFile = await Bun.file(
+        `${projectName}/superset/docker/docker-compose-image-tag.yml`
+      ).text()
+      const dockerComposeImageTagJson = YAML.parse(dockerComposeImageTagFile)
+      const updatedDockerComposeImageTagJson = R.compose(
+        R.assocPath(['services', 'superset', 'extra_hosts'], ['"host.docker.internal:host-gateway"']),
+        R.assocPath(['services', 'superset-worker', 'extra_hosts'], ['"host.docker.internal:host-gateway"'])
+      )(dockerComposeImageTagJson)
+      const updatedDockerComposeImageTagYaml = YAML.stringify(updatedDockerComposeImageTagJson)
+      await Bun.write(`${projectName}/superset/docker/docker-compose-image-tag.yml`, updatedDockerComposeImageTagYaml)
+
       // Remove .git
       await execShell(`rm -rf ./${projectName}/superset/.git`)
     },
     run: async (options?: SupersetConfigRunOptions) => {
       const { build = false } = options || {}
-      await $`docker compose up -d ${build ? '--build' : ''}`.cwd(`${cwd}/superset`)
+      await $`docker compose -f docker-compose-image-tag.yml up -d ${build ? '--build' : ''}`.cwd(`${cwd}/superset`)
     },
   }
 }

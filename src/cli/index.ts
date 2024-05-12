@@ -1,12 +1,13 @@
 import * as R from 'ramda'
 import { Command } from 'commander'
 import { colors } from './constants'
+import { getPackageVersion } from './utils'
 import init from './commands/init'
 import start from './commands/start'
 import stop from './commands/stop'
 import down from './commands/down'
 import logs from './commands/logs'
-import { getPackageVersion } from './utils'
+import runMeltano from './commands/run/meltano'
 
 const program = new Command()
 
@@ -62,6 +63,21 @@ export default async function runCli() {
     .option('--since <value>', 'Only show logs since a specific time ago')
     .action((service, options) => {
       logs(service, options)
+    })
+
+  const runCommand = program
+    .command('down')
+    .description('Tear down the development services')
+    .action(() => {
+      down()
+    })
+
+  const runMeltanoCommand = runCommand
+    .command('meltano')
+    .description('Run Meltano commands')
+    .argument('<string...>', 'Command to run')
+    .action((meltanoCmd) => {
+      runMeltano(meltanoCmd, process.argv.slice(4))
     })
 
   program.parse(process.argv)
