@@ -1,0 +1,22 @@
+[
+  {
+    "entity": "orders",
+    "path": "../data/orders.csv",
+    "keys": ["order_id"]
+  },
+  {
+    "entity": "customers",
+    "path": "../data/orders.csv",
+    "keys": ["id"]
+  },
+  {
+    "entity": "products",
+    "path": "../data/products.csv",
+    "keys": ["id"]
+  },
+  {
+    "entity": "stores",
+    "path": "../data/stores.csv",
+    "keys": ["id"]
+  }
+]

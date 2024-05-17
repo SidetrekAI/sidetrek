@@ -36,9 +36,9 @@ import {
   TRINO_HOST_PORT,
   TRINO_VERSION,
 } from './constants'
-import dagsterMeltanoMeltanoPy from './templates/dagster-meltano/meltano.py'
-import dagsterDbtDbtAssetsPy from './templates/dagster-dbt/dbt_assets.py'
-import dagsterDbtInitPy from './templates/dagster-dbt/__init__.py'
+import dagsterMeltanoMeltanoPy from './templates/dagsterIcebergTrinoStack/dagster-meltano/meltano.py'
+import dagsterDbtDbtAssetsPy from './templates/dagsterIcebergTrinoStack/dagster-dbt/dbt_assets.py'
+import dagsterDbtInitPy from './templates/dagsterIcebergTrinoStack/dagster-dbt/__init__.py'
 
 const cwd = process.cwd()
 

@@ -27,6 +27,7 @@ else:
     dbt_manifest_path = dbt_project_dir.joinpath("target", "manifest.json")
 
 
+# This builds the dbt project and creates dagster assets
 @dbt_assets(manifest=dbt_manifest_path)
 def dbt_project_assets(context: AssetExecutionContext, dbt: DbtCliResource):
     yield from dbt.cli(["build"], context=context).stream()`
