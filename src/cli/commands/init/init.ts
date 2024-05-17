@@ -2,9 +2,9 @@ import * as p from '@clack/prompts'
 import * as R from 'ramda'
 import { setTimeout as sleep } from 'node:timers/promises'
 import chalk from 'chalk'
-import { colors } from '../constants'
-import { validateProjectName } from '../validators'
-import { clackLog, endStopwatch, startStopwatch } from '../utils'
+import { colors } from '../../constants'
+import { validateProjectName } from '../../validators'
+import { clackLog, endStopwatch, startStopwatch } from '../../utils'
 import { buildDagsterIcebergTrinoStack } from './stacks/dagsterIcebergTrinoStack'
 
 // NOTE: cwd is the PARENT of the root project dir (because it's not created yet before `init`)
@@ -27,12 +27,16 @@ export default async function init(options: any) {
       intro: () => p.intro(colors.sidetrekPurple(`🔥 Let's create a new data project!`)),
       prerequisites: async ({ results }) => {
         return await p.confirm({
-          message: `Sidetrek requires ${chalk.underline.yellow('Python 3.10-3.11')}, ${chalk.underline.yellow('Poetry')}, and git CLI installed. Are you ready to continue?`,
+          message: `Sidetrek requires ${chalk.underline.yellow('Python 3.10-3.11')}, ${chalk.underline.yellow(
+            'Poetry'
+          )}, and git CLI installed. Are you ready to continue?`,
         })
       },
       pythonVersion: async ({ results }) => {
         if (!results.prerequisites) {
-          p.cancel('No worries - please try again after installing the prerequisites.\n   (e.g. `pyenv install 3.10 && pyenv global 3.10 && pip install poetry`)')
+          p.cancel(
+            'No worries - please try again after installing the prerequisites.\n   (e.g. `pyenv install 3.10 && pyenv global 3.10 && pip install poetry`)'
+          )
           process.exit(0)
         }
 
@@ -63,6 +67,15 @@ export default async function init(options: any) {
           ],
         })
       },
+      example: async ({ results }) => {
+        return await p.select({
+          message: `Would you like to include example code?`,
+          options: [
+            { value: true, label: 'Yes', hint: '(recommended)' },
+            { value: false, label: 'No' },
+          ],
+        })
+      },
       buildStack: async ({ results }) => {
         const dataStack = results.stack as string
 
@@ -72,7 +85,11 @@ export default async function init(options: any) {
         }
       },
       outro: async () => {
-        const outroMessage = colors.sidetrekPurple(`You're all set - enjoy building your new data project! 🚀`) +  colors.sidetrekLightPurple('\n\n   (Next up - Check out the quickstart tutorial at https://docs.sidetrek.com)')
+        const outroMessage =
+          colors.sidetrekPurple(`You're all set - enjoy building your new data project! 🚀`) +
+          colors.sidetrekLightPurple(
+            '\n\n   (Next up - Check out the quickstart tutorial at https://docs.sidetrek.com)'
+          )
         return await p.outro(outroMessage)
       },
     },

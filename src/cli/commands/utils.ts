@@ -86,5 +86,6 @@ export const extractOptions = (argv: string[]): string => {
   console.log('wildcardOptions', wildcardOptions)
   console.log('wildcardOptionsShort', wildcardOptionsShort)
   const optionsStr = wildcardOptionsShort.join(' ') + ' ' + wildcardOptions.join(' ')
+  console.log('optionsStr', optionsStr)
   return optionsStr
 }

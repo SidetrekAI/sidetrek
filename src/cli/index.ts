@@ -2,12 +2,13 @@ import * as R from 'ramda'
 import { Command } from 'commander'
 import { colors } from './constants'
 import { getPackageVersion } from './utils'
-import init from './commands/init'
+import init from './commands/init/init'
 import start from './commands/start'
 import stop from './commands/stop'
 import down from './commands/down'
 import logs from './commands/logs'
 import runMeltano from './commands/run/meltano'
+import { runTrinoShell } from './commands/run/trino'
 
 const program = new Command()
 
@@ -61,6 +62,7 @@ export default async function runCli() {
     .argument('[string]', 'Service to view logs for')
     .option('-f, --follow', 'Follow logs')
     .option('--since <value>', 'Only show logs since a specific time ago')
+    .option('-n, --tail', 'Follow logs')
     .action((service, options) => {
       logs(service, options)
     })
@@ -78,6 +80,15 @@ export default async function runCli() {
     .argument('<string...>', 'Command to run')
     .action((meltanoCmd) => {
       runMeltano(meltanoCmd, process.argv.slice(4))
+    })
+
+  const runTrinoCommand = runCommand.command('trino').description('Run Trino commands')
+
+  const runTrinoShellCommand = runTrinoCommand
+    .command('shell')
+    .description('Enter Trino shell')
+    .action(() => {
+      runTrinoShell()
     })
 
   program.parse(process.argv)

@@ -39,8 +39,9 @@ export const ICEBERG_PG_CONTAINER_PORT = '5432'
 export const ICEBERG_PG_CATALOG_VOLUME_NAME = 'iceberg_pg_catalog_data'
 export const ICEBERG_PG_CATALOG_VOLUME = { [ICEBERG_PG_CATALOG_VOLUME_NAME]: null }
 export const TRINO_VERSION = '437'
-export const TRINO_HOST_PORT = '8081'
+export const TRINO_HOST_PORT = '8080'
 export const TRINO_CONTAINER_PORT = '8080'
+export const SUPERSET_HOST_PORT = '8088'
 
 export const S3_ENDPOINT = `http://minio:${MINIO_SERVER_HOST_PORT}`
 export const AWS_REGION = 'us-west-2'

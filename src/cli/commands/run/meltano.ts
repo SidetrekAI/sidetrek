@@ -6,7 +6,7 @@ import { extractOptions } from '../utils'
 // NOTE: cwd is the root project dir
 const cwd = process.cwd()
 
-export default async function start(meltanoCmd: string[], argv: string[]) {
+export default async function runMeltano(meltanoCmd: string[], argv: string[]) {
   const projectName = path.basename(cwd)
   const meltanoProjectDir = `${cwd}/${projectName}/meltano`
 

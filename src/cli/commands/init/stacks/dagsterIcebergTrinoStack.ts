@@ -37,9 +37,13 @@ import {
   MINIO_SERVER_HOST_PORT,
   ICEBERG_REST_HOST_PORT,
   RAW_ICEBERG_TABLE_NAME,
+  DAGSTER_HOST_PORT,
+  TRINO_HOST_PORT,
+  SUPERSET_HOST_PORT,
+  ICEBERG_PG_HOST_PORT,
 } from '@cli/constants'
 import gitignore from '@cli/templates/gitignore'
-import { initTool } from '../utils'
+import { initTool } from '../../utils'
 // import ordersCsv from '@cli/templates/dagsterIcebergTrinoStack/example/data/orders.csv'
 // import customersCsv from '@cli/templates/dagsterIcebergTrinoStack/example/data/customers.csv'
 // import productsCsv from '@cli/templates/dagsterIcebergTrinoStack/example/data/products.csv'
@@ -53,13 +57,16 @@ import stgIcebergStoresSql from '@cli/templates/dagsterIcebergTrinoStack/example
 import intIcebergDenormalizedOrdersSql from '@cli/templates/dagsterIcebergTrinoStack/example/dbt/int_iceberg__denormalized_orders.sql'
 import martsGeneralSql from '@cli/templates/dagsterIcebergTrinoStack/example/dbt/marts_iceberg__general.sql'
 import martsMarketingSql from '@cli/templates/dagsterIcebergTrinoStack/example/dbt/marts_iceberg__marketing.sql'
-import martsPaymentsSql from '@cli/templates/dagsterIcebergTrinoStack/example/dbt/marts_iceberg__payments.sql'
+import martsPaymentSql from '@cli/templates/dagsterIcebergTrinoStack/example/dbt/marts_iceberg__payment.sql'
+import type { SidetrekConfig } from '@cli/types'
 
 const s = p.spinner()
 
 // TODO: Make meltano, dbt, superset optional (the rest is not optional)
 export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<void> => {
-  const { projectName, pythonVersion } = cliInputs
+  const projectName: string = cliInputs.projectName
+  const pythonVersion: string = cliInputs.pythonVersion
+  const shouldAddExample: boolean = cliInputs.example
 
   const startTime = startStopwatch()
 
@@ -83,12 +90,48 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    * Scaffold the project
    *
    */
-  // `poetry new` -> remove tests -> create sidetrek dir
+  // `poetry new` -> remove tests -> create sidetrek dir -> add sidetrek.config.yaml to project root
   s.start('Scaffolding your project')
   const poetryNewStartTime = startStopwatch()
   const poetryNewResp = await execShell(
     `poetry new ${projectName} && rm -rf ./${projectName}/tests && mkdir -p ./${projectName}/.sidetrek`
   )
+
+  const sidetrekConfigYaml: SidetrekConfig = {
+    services: {
+      dagster: {
+        title: 'Dagster',
+        port: DAGSTER_HOST_PORT,
+      },
+      meltano: {
+        title: 'Meltano',
+      },
+      dbt: {
+        title: 'DBT',
+      },
+      minio: {
+        title: 'Minio',
+        port: MINIO_SERVER_HOST_PORT,
+      },
+      'iceberg-rest': {
+        title: 'Iceberg REST Catalog',
+        port: ICEBERG_REST_HOST_PORT,
+      },
+      'iceberg-pg-catalog': {
+        title: 'Iceberg Postgres Catalog',
+        port: ICEBERG_PG_HOST_PORT,
+      },
+      trino: {
+        title: 'Trino',
+        port: TRINO_HOST_PORT,
+      },
+      superset: {
+        title: 'Superset',
+        port: SUPERSET_HOST_PORT,
+      },
+    },
+  }
+  await Bun.write(`./${projectName}/sidetrek.config.yaml`, YAML.stringify(sidetrekConfigYaml))
 
   if (poetryNewResp?.error) {
     const errorMessage = `Sorry, something went wrong while scaffolding the project via Poetry.\n\n${poetryNewResp.error?.stderr}`
@@ -298,199 +341,200 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    * Add example code
    *
    */
+  if (shouldAddExample) {
+    // ----- Add meltano example code -----
 
-  // ----- Add meltano example code -----
+    // Copy example csv files
+    s.start('Copying example data')
+    const exampleDataCopyStartTime = startStopwatch()
+    try {
+      // await Bun.write(`./${projectName}/${projectName}/meltano/extract/orders.csv`, await Bun.file(ordersCsv).text())
+      // await Bun.write(`./${projectName}/${projectName}/meltano/extract/customers.csv`, await Bun.file(customersCsv).text())
+      // await Bun.write(`./${projectName}/${projectName}/meltano/extract/products.csv`, await Bun.file(productsCsv).text())
+      // await Bun.write(`./${projectName}/${projectName}/meltano/extract/stores.csv`, await Bun.file(storesCsv).text())
 
-  // Copy example csv files
-  s.start('Copying example data')
-  const exampleDataCopyStartTime = startStopwatch()
-  try {
-    // await Bun.write(`./${projectName}/${projectName}/meltano/extract/orders.csv`, await Bun.file(ordersCsv).text())
-    // await Bun.write(`./${projectName}/${projectName}/meltano/extract/customers.csv`, await Bun.file(customersCsv).text())
-    // await Bun.write(`./${projectName}/${projectName}/meltano/extract/products.csv`, await Bun.file(productsCsv).text())
-    // await Bun.write(`./${projectName}/${projectName}/meltano/extract/stores.csv`, await Bun.file(storesCsv).text())
+      // Create example_csv_files_def.json inside /meltano/extract
+      await Bun.write(
+        `./${projectName}/${projectName}/meltano/extract/example_csv_files_def.json`,
+        JSON.stringify(exampleCsvFilesDefJson)
+      )
 
-    // Create example_csv_files_def.json inside /meltano/extract
+      // Add the `csv_files_definition` config and the custom loader target-iceberg in meltano.yml
+      const meltanoYamlJson = YAML.parse(await $`cat ./${projectName}/${projectName}/meltano/meltano.yml`.text())
+      const newMeltanoYaml = YAML.stringify({
+        ...meltanoYamlJson,
+        plugins: {
+          extractors: [
+            {
+              name: 'tap-csv',
+              variant: 'meltanolabs',
+              pip_url: 'git+https://github.com/MeltanoLabs/tap-csv.git',
+              config: {
+                csv_files_definition: 'extract/example_csv_files_def.json',
+              },
+            },
+          ],
+          loaders: [
+            {
+              name: 'target-iceberg',
+              namespace: 'target_iceberg',
+              pip_url: 'git+https://github.com/SidetrekAI/target-iceberg',
+              executable: 'target-iceberg',
+              config: {
+                add_record_metadata: true,
+                aws_access_key_id: `$${AWS_ACCESS_KEY_ID_ENVNAME}`,
+                aws_secret_access_key: `$${AWS_SECRET_ACCESS_KEY_ENVNAME}`,
+                s3_endpoint: `http://localhost:${MINIO_SERVER_HOST_PORT}`,
+                s3_bucket: LAKEHOUSE_NAME,
+                iceberg_rest_uri: `http://localhost:${ICEBERG_REST_HOST_PORT}`,
+                iceberg_catalog_name: ICEBERG_CATALOG_NAME,
+                iceberg_catalog_namespace_name: RAW_ICEBERG_TABLE_NAME,
+              },
+            },
+          ],
+        },
+      })
+      await Bun.write(`./${projectName}/${projectName}/meltano/meltano.yml`, newMeltanoYaml)
+
+      const exampleDataCopyDuration = endStopwatch(exampleDataCopyStartTime)
+      s.stop('Copied example data successfully' + chalk.gray(` [${exampleDataCopyDuration}ms]`))
+    } catch (err) {
+      const errorMessage = `Sorry, something went wrong while copying example data.\n\n${err}`
+      exitOnError(errorMessage)
+    }
+
+    // Install the meltano extractor/loader
+    s.start('Installing Meltano tap-csv extractor and target-iceberg loader')
+    const meltanoInstallStartTime = startStopwatch()
+    const meltanoInstallResp = await execShell(`poetry run meltano lock --update --all && poetry run meltano install`, {
+      cwd: `./${projectName}/${projectName}/meltano`,
+    })
+
+    if (meltanoInstallResp?.error) {
+      const errorMessage = `Sorry, something went wrong while installing meltano tap-csv extractor and target-iceberg loader.\n\n${meltanoInstallResp.error?.stderr}`
+      exitOnError(errorMessage)
+    } else {
+      const meltanoInstallDuration = endStopwatch(meltanoInstallStartTime)
+      s.stop(
+        'Meltano tap-csv extractor and target-iceberg loader successfully installed' +
+          chalk.gray(` [${meltanoInstallDuration}ms]`)
+      )
+    }
+
+    // ----- Add dbt example code -----
+
+    const dbtProjectDirpath = `./${projectName}/${projectName}/dbt/${projectName}`
+
+    // Add staging models
+    const stgIcebergYaml = YAML.stringify({
+      version: 2,
+      sources: [
+        {
+          name: 'stg_iceberg',
+          database: 'iceberg',
+          schema: 'raw',
+          tables: [{ name: 'orders' }, { name: 'customers' }, { name: 'products' }, { name: 'stores' }],
+        },
+      ],
+      models: [
+        { name: 'stg_iceberg__orders' },
+        { name: 'stg_iceberg__customers' },
+        { name: 'stg_iceberg__products' },
+        { name: 'stg_iceberg__stores' },
+      ],
+    })
+    await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg.yml`, stgIcebergYaml)
+
+    await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__orders.sql`, stgIcebergOrdersSql)
+    await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__customers.sql`, stgIcebergCustomersSql)
+    await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__products.sql`, stgIcebergProductsSql)
+    await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__stores.sql`, stgIcebergStoresSql)
+
+    // Add intermediate models
+    const intIcebergYaml = YAML.stringify({
+      version: 2,
+      sources: [
+        {
+          name: 'int_iceberg',
+          database: 'iceberg',
+          schema: 'project_staging',
+          tables: [
+            { name: 'stg_iceberg__orders' },
+            { name: 'stg_iceberg__customers' },
+            { name: 'stg_iceberg__products' },
+            { name: 'stg_iceberg__stores' },
+          ],
+        },
+      ],
+      models: [{ name: 'int_iceberg__denormalized_orders' }],
+    })
+    await Bun.write(`${dbtProjectDirpath}/models/intermediate/int_iceberg.yml`, intIcebergYaml)
+
     await Bun.write(
-      `./${projectName}/${projectName}/meltano/extract/example_csv_files_def.json`,
-      JSON.stringify(exampleCsvFilesDefJson)
+      `${dbtProjectDirpath}/models/intermediate/int_iceberg__denormalized_orders.sql`,
+      intIcebergDenormalizedOrdersSql
     )
 
-    // Add the `csv_files_definition` config and the custom loader target-iceberg in meltano.yml
-    const meltanoYamlJson = YAML.parse(await $`cat ./${projectName}/${projectName}/meltano/meltano.yml`.text())
-    const newMeltanoYaml = YAML.stringify({
-      ...meltanoYamlJson,
-      plugins: {
-        extractors: [
-          {
-            name: 'tap-csv',
-            variant: 'meltanolabs',
-            pip_url: 'git+https://github.com/MeltanoLabs/tap-csv.git',
-            config: {
-              csv_files_definition: 'extract/example_csv_files_def.json',
-            },
+    // Add marts models
+    const martsIcebergYaml = YAML.stringify({
+      version: 2,
+      sources: [
+        {
+          name: 'marts_iceberg',
+          database: 'iceberg',
+          schema: 'project_intermediate',
+          tables: [{ name: 'int_iceberg__denormalized_orders' }],
+        },
+      ],
+      models: [
+        { name: 'marts_iceberg__general' },
+        { name: 'marts_iceberg__marketing' },
+        { name: 'marts_iceberg__payment' },
+      ],
+    })
+    await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg.yml`, martsIcebergYaml)
+
+    await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__general.sql`, martsGeneralSql)
+    await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__marketing.sql`, martsMarketingSql)
+    await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__payments.sql`, martsPaymentSql)
+
+    // Add models to dbt_project.yml
+    const dbtProjectYamlJson = YAML.parse(
+      await $`cat ./${projectName}/${projectName}/dbt/${projectName}/dbt_project.yml`.text()
+    )
+    const newDbtProjectYaml = YAML.stringify({
+      ...dbtProjectYamlJson,
+      models: {
+        ...dbtProjectYamlJson.models,
+        [projectName]: {
+          staging: {
+            '+materialized': 'view',
+            '+schema': 'staging',
+            '+views_enabled': false,
           },
-        ],
-        loaders: [
-          {
-            name: 'target-iceberg',
-            namespace: 'target_iceberg',
-            pip_url: 'git+https://github.com/SidetrekAI/target-iceberg',
-            executable: 'target-iceberg',
-            config: {
-              add_record_metadata: true,
-              aws_access_key_id: `$${AWS_ACCESS_KEY_ID_ENVNAME}`,
-              aws_secret_access_key: `$${AWS_SECRET_ACCESS_KEY_ENVNAME}`,
-              s3_endpoint: `http://localhost:${MINIO_SERVER_HOST_PORT}`,
-              s3_bucket: LAKEHOUSE_NAME,
-              iceberg_rest_uri: `http://localhost:${ICEBERG_REST_HOST_PORT}`,
-              iceberg_catalog_name: ICEBERG_CATALOG_NAME,
-              iceberg_catalog_namespace_name: RAW_ICEBERG_TABLE_NAME,
-            },
+          intermediate: {
+            '+materialized': 'view',
+            '+schema': 'intermediate',
+            '+views_enabled': false,
           },
-        ],
+          marts: {
+            '+materialized': 'view',
+            '+schema': 'marts',
+            '+views_enabled': false,
+          },
+        },
       },
     })
-    await Bun.write(`./${projectName}/${projectName}/meltano/meltano.yml`, newMeltanoYaml)
+    await Bun.write(`${dbtProjectDirpath}/dbt_project.yml`, newDbtProjectYaml)
 
-    const exampleDataCopyDuration = endStopwatch(exampleDataCopyStartTime)
-    s.stop('Copied example data successfully' + chalk.gray(` [${exampleDataCopyDuration}ms]`))
-  } catch (err) {
-    const errorMessage = `Sorry, something went wrong while copying example data.\n\n${err}`
-    exitOnError(errorMessage)
-  }
+    // ----- Add dagster example code -----
 
-  // Install the meltano extractor/loader
-  s.start('Installing Meltano tap-csv extractor and target-iceberg loader')
-  const meltanoInstallStartTime = startStopwatch()
-  const meltanoInstallResp = await execShell(`poetry run meltano lock --update --all && poetry run meltano install`, {
-    cwd: `./${projectName}/${projectName}/meltano`,
-  })
-
-  if (meltanoInstallResp?.error) {
-    const errorMessage = `Sorry, something went wrong while installing meltano tap-csv extractor and target-iceberg loader.\n\n${meltanoInstallResp.error?.stderr}`
-    exitOnError(errorMessage)
-  } else {
-    const meltanoInstallDuration = endStopwatch(meltanoInstallStartTime)
-    s.stop(
-      'Meltano tap-csv extractor and target-iceberg loader successfully installed' +
-        chalk.gray(` [${meltanoInstallDuration}ms]`)
+    // Replace dagster __init__.py to include meltano job and dbt assets/resources
+    await Bun.write(
+      `./${projectName}/${projectName}/dagster/${projectName}/${projectName}/__init__.py`,
+      exampleDagsterInitPy
     )
   }
-
-  // ----- Add dbt example code -----
-
-  const dbtProjectDirpath = `./${projectName}/${projectName}/dbt/${projectName}`
-
-  // Add staging models
-  const stgIcebergYaml = YAML.stringify({
-    version: 2,
-    sources: [
-      {
-        name: 'stg_iceberg',
-        database: 'iceberg',
-        schema: 'raw',
-        tables: [{ name: 'orders' }, { name: 'customers' }, { name: 'products' }, { name: 'stores' }],
-      },
-    ],
-    models: [
-      { name: 'stg_iceberg__orders' },
-      { name: 'stg_iceberg__customers' },
-      { name: 'stg_iceberg__products' },
-      { name: 'stg_iceberg__stores' },
-    ],
-  })
-  await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg.yml`, stgIcebergYaml)
-
-  await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__orders.sql`, stgIcebergOrdersSql)
-  await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__customers.sql`, stgIcebergCustomersSql)
-  await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__products.sql`, stgIcebergProductsSql)
-  await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__stores.sql`, stgIcebergStoresSql)
-
-  // Add intermediate models
-  const intIcebergYaml = YAML.stringify({
-    version: 2,
-    sources: [
-      {
-        name: 'int_iceberg',
-        database: 'iceberg',
-        schema: 'project_staging',
-        tables: [
-          { name: 'stg_iceberg__orders' },
-          { name: 'stg_iceberg__customers' },
-          { name: 'stg_iceberg__products' },
-          { name: 'stg_iceberg__stores' },
-        ],
-      },
-    ],
-    models: [{ name: 'int_iceberg__denormalized_orders' }],
-  })
-  await Bun.write(`${dbtProjectDirpath}/models/intermediate/int_iceberg.yml`, intIcebergYaml)
-
-  await Bun.write(
-    `${dbtProjectDirpath}/models/intermediate/int_iceberg__denormalized_orders.sql`,
-    intIcebergDenormalizedOrdersSql
-  )
-
-  // Add marts models
-  const martsIcebergYaml = YAML.stringify({
-    version: 2,
-    sources: [
-      {
-        name: 'marts_iceberg',
-        database: 'iceberg',
-        schema: 'project_intermediate',
-        tables: [{ name: 'int_iceberg__denormalized_orders' }],
-      },
-    ],
-    models: [
-      { name: 'marts_iceberg__general' },
-      { name: 'marts_iceberg__marketing' },
-      { name: 'marts_iceberg__payment' },
-    ],
-  })
-  await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg.yml`, martsIcebergYaml)
-
-  await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__general.sql`, martsGeneralSql)
-  await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__marketing.sql`, martsMarketingSql)
-  await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__payments.sql`, martsPaymentsSql)
-
-  // Add models to dbt_project.yml
-  const dbtProjectYamlJson = YAML.parse(
-    await $`cat ./${projectName}/${projectName}/dbt/${projectName}/dbt_project.yml`.text()
-  )
-  const newDbtProjectYaml = YAML.stringify({
-    ...dbtProjectYamlJson,
-    models: {
-      ...dbtProjectYamlJson.models,
-      [projectName]: {
-        staging: {
-          '+materialized': 'view',
-          '+schema': 'staging',
-          '+views_enabled': false,
-        },
-        intermediate: {
-          '+materialized': 'view',
-          '+schema': 'intermediate',
-          '+views_enabled': false,
-        },
-        marts: {
-          '+materialized': 'view',
-          '+schema': 'marts',
-          '+views_enabled': false,
-        },
-      },
-    },
-  })
-  await Bun.write(`${dbtProjectDirpath}/dbt_project.yml`, newDbtProjectYaml)
-
-  // ----- Add dagster example code -----
-
-  // Replace dagster __init__.py to include meltano job and dbt assets/resources
-  await Bun.write(
-    `./${projectName}/${projectName}/dagster/${projectName}/${projectName}/__init__.py`,
-    exampleDagsterInitPy
-  )
 
   /**
    *

@@ -16,7 +16,5 @@
 - Run `sidetrek --help` to see all available commands and options
 
 ## Gotchas
-- Port conflicts between trino (8080) and superset websocket
-  - Solution: change trino host port to 8081
 - rest-iceberg cannot access minio (`UNKNOWN_HOST error: lakehouse.minio`) due to awd sdk default changes to path-style-access
   - Solution: In minio docker-compose service, set `MINIO_DOMAIN=minio` and add network alias `'${LAKEHOUSE_NAME}.minio'`
