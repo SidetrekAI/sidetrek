@@ -44,15 +44,15 @@ export default async function logs(service: string | undefined, options: any) {
       },
       runLogs: async ({ results }) => {
         const service = results.service as unknown as string
-        await runLogCommand(service, logCmdOptions)
+        await runLogsCommand(service, logCmdOptions)
       },
     })
   } else {
-    await runLogCommand(service, logCmdOptions)
+    await runLogsCommand(service, logCmdOptions)
   }
 }
 
-const runLogCommand = async (service: string, options: string) => {
+const runLogsCommand = async (service: string, options: string) => {
   if (service === 'superset') {
     // Superset runs separately from the other services
     await $`docker compose logs superset ${options}`.cwd(`${cwd}/superset`)

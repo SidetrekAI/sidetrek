@@ -6,9 +6,9 @@ const sql = `{{
     unique_key='order_id',
     incremental_strategy='merge',
     properties={
-    "format": "'PARQUET'",
-    "sorted_by": "ARRAY['order_id']",
-    "partitioning": "ARRAY['device_type']",
+      "format": "'PARQUET'",
+      "sorted_by": "ARRAY['order_id']",
+      "partitioning": "ARRAY['device_type']",
     }
   )
 }}

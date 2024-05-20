@@ -44,10 +44,10 @@ import {
 } from '@cli/constants'
 import gitignore from '@cli/templates/gitignore'
 import { initTool } from '../../utils'
-// import ordersCsv from '@cli/templates/dagsterIcebergTrinoStack/example/data/orders.csv'
-// import customersCsv from '@cli/templates/dagsterIcebergTrinoStack/example/data/customers.csv'
-// import productsCsv from '@cli/templates/dagsterIcebergTrinoStack/example/data/products.csv'
-// import storesCsv from '@cli/templates/dagsterIcebergTrinoStack/example/data/stores.csv'
+import ordersCsv from '@cli/templates/dagsterIcebergTrinoStack/example/data/orders.csv'
+import customersCsv from '@cli/templates/dagsterIcebergTrinoStack/example/data/customers.csv'
+import productsCsv from '@cli/templates/dagsterIcebergTrinoStack/example/data/products.csv'
+import storesCsv from '@cli/templates/dagsterIcebergTrinoStack/example/data/stores.csv'
 import exampleCsvFilesDefJson from '@cli/templates/dagsterIcebergTrinoStack/example/meltano/example_csv_files_def.json'
 import exampleDagsterInitPy from '@cli/templates/dagsterIcebergTrinoStack/example/dagster/__init__.py'
 import stgIcebergOrdersSql from '@cli/templates/dagsterIcebergTrinoStack/example/dbt/stg_iceberg__orders.sql'
@@ -348,10 +348,10 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     s.start('Copying example data')
     const exampleDataCopyStartTime = startStopwatch()
     try {
-      // await Bun.write(`./${projectName}/${projectName}/meltano/extract/orders.csv`, await Bun.file(ordersCsv).text())
-      // await Bun.write(`./${projectName}/${projectName}/meltano/extract/customers.csv`, await Bun.file(customersCsv).text())
-      // await Bun.write(`./${projectName}/${projectName}/meltano/extract/products.csv`, await Bun.file(productsCsv).text())
-      // await Bun.write(`./${projectName}/${projectName}/meltano/extract/stores.csv`, await Bun.file(storesCsv).text())
+      await Bun.write(`./${projectName}/${projectName}/meltano/extract/orders.csv`, await Bun.file(ordersCsv).text())
+      await Bun.write(`./${projectName}/${projectName}/meltano/extract/customers.csv`, await Bun.file(customersCsv).text())
+      await Bun.write(`./${projectName}/${projectName}/meltano/extract/products.csv`, await Bun.file(productsCsv).text())
+      await Bun.write(`./${projectName}/${projectName}/meltano/extract/stores.csv`, await Bun.file(storesCsv).text())
 
       // Create example_csv_files_def.json inside /meltano/extract
       await Bun.write(

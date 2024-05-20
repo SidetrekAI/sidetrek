@@ -27,6 +27,9 @@
     // Alias paths
     "paths": {
       "@cli/*": ["./src/cli/*"]
-    }
+    },
+
+    // Global types
+    "typeRoots": ["./src/types"]
   }
 }

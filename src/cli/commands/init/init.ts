@@ -88,7 +88,7 @@ export default async function init(options: any) {
         const outroMessage =
           colors.sidetrekPurple(`You're all set - enjoy building your new data project! 🚀`) +
           colors.sidetrekLightPurple(
-            '\n\n   (Next up - Check out the quickstart tutorial at https://docs.sidetrek.com)'
+            '\n\n   (Next up - Check out the quickstart tutorial at https://docs.sidetrek.com/get-started/overview)'
           )
         return await p.outro(outroMessage)
       },
