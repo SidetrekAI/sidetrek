@@ -68,11 +68,9 @@ export default async function runCli() {
     })
 
   const runCommand = program
-    .command('down')
-    .description('Tear down the development services')
-    .action(() => {
-      down()
-    })
+    .command('run')
+    .description('Run tool commands')
+    .action(() => {})
 
   const runMeltanoCommand = runCommand
     .command('meltano')

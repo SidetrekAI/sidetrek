@@ -348,10 +348,10 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     s.start('Copying example data')
     const exampleDataCopyStartTime = startStopwatch()
     try {
-      await Bun.write(`./${projectName}/${projectName}/meltano/extract/orders.csv`, await Bun.file(ordersCsv).text())
-      await Bun.write(`./${projectName}/${projectName}/meltano/extract/customers.csv`, await Bun.file(customersCsv).text())
-      await Bun.write(`./${projectName}/${projectName}/meltano/extract/products.csv`, await Bun.file(productsCsv).text())
-      await Bun.write(`./${projectName}/${projectName}/meltano/extract/stores.csv`, await Bun.file(storesCsv).text())
+      await Bun.write(`./${projectName}/${projectName}/data/example/orders.csv`, await Bun.file(ordersCsv).text())
+      await Bun.write(`./${projectName}/${projectName}/data/example/customers.csv`, await Bun.file(customersCsv).text())
+      await Bun.write(`./${projectName}/${projectName}/data/example/products.csv`, await Bun.file(productsCsv).text())
+      await Bun.write(`./${projectName}/${projectName}/data/example/stores.csv`, await Bun.file(storesCsv).text())
 
       // Create example_csv_files_def.json inside /meltano/extract
       await Bun.write(
@@ -423,117 +423,132 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
     // ----- Add dbt example code -----
 
-    const dbtProjectDirpath = `./${projectName}/${projectName}/dbt/${projectName}`
+    s.start('Adding DBT example code')
+    const dbtExampleCodeStartTime = startStopwatch()
 
-    // Add staging models
-    const stgIcebergYaml = YAML.stringify({
-      version: 2,
-      sources: [
-        {
-          name: 'stg_iceberg',
-          database: 'iceberg',
-          schema: 'raw',
-          tables: [{ name: 'orders' }, { name: 'customers' }, { name: 'products' }, { name: 'stores' }],
-        },
-      ],
-      models: [
-        { name: 'stg_iceberg__orders' },
-        { name: 'stg_iceberg__customers' },
-        { name: 'stg_iceberg__products' },
-        { name: 'stg_iceberg__stores' },
-      ],
-    })
-    await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg.yml`, stgIcebergYaml)
+    try {
+      const dbtProjectDirpath = `./${projectName}/${projectName}/dbt/${projectName}`
 
-    await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__orders.sql`, stgIcebergOrdersSql)
-    await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__customers.sql`, stgIcebergCustomersSql)
-    await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__products.sql`, stgIcebergProductsSql)
-    await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__stores.sql`, stgIcebergStoresSql)
-
-    // Add intermediate models
-    const intIcebergYaml = YAML.stringify({
-      version: 2,
-      sources: [
-        {
-          name: 'int_iceberg',
-          database: 'iceberg',
-          schema: 'project_staging',
-          tables: [
-            { name: 'stg_iceberg__orders' },
-            { name: 'stg_iceberg__customers' },
-            { name: 'stg_iceberg__products' },
-            { name: 'stg_iceberg__stores' },
-          ],
-        },
-      ],
-      models: [{ name: 'int_iceberg__denormalized_orders' }],
-    })
-    await Bun.write(`${dbtProjectDirpath}/models/intermediate/int_iceberg.yml`, intIcebergYaml)
-
-    await Bun.write(
-      `${dbtProjectDirpath}/models/intermediate/int_iceberg__denormalized_orders.sql`,
-      intIcebergDenormalizedOrdersSql
-    )
-
-    // Add marts models
-    const martsIcebergYaml = YAML.stringify({
-      version: 2,
-      sources: [
-        {
-          name: 'marts_iceberg',
-          database: 'iceberg',
-          schema: 'project_intermediate',
-          tables: [{ name: 'int_iceberg__denormalized_orders' }],
-        },
-      ],
-      models: [
-        { name: 'marts_iceberg__general' },
-        { name: 'marts_iceberg__marketing' },
-        { name: 'marts_iceberg__payment' },
-      ],
-    })
-    await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg.yml`, martsIcebergYaml)
-
-    await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__general.sql`, martsGeneralSql)
-    await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__marketing.sql`, martsMarketingSql)
-    await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__payments.sql`, martsPaymentSql)
-
-    // Add models to dbt_project.yml
-    const dbtProjectYamlJson = YAML.parse(
-      await $`cat ./${projectName}/${projectName}/dbt/${projectName}/dbt_project.yml`.text()
-    )
-    const newDbtProjectYaml = YAML.stringify({
-      ...dbtProjectYamlJson,
-      models: {
-        ...dbtProjectYamlJson.models,
-        [projectName]: {
-          staging: {
-            '+materialized': 'view',
-            '+schema': 'staging',
-            '+views_enabled': false,
+      // Add staging models
+      const stgIcebergYaml = YAML.stringify({
+        version: 2,
+        sources: [
+          {
+            name: 'stg_iceberg',
+            database: 'iceberg',
+            schema: 'raw',
+            tables: [{ name: 'orders' }, { name: 'customers' }, { name: 'products' }, { name: 'stores' }],
           },
-          intermediate: {
-            '+materialized': 'view',
-            '+schema': 'intermediate',
-            '+views_enabled': false,
+        ],
+        models: [
+          { name: 'stg_iceberg__orders' },
+          { name: 'stg_iceberg__customers' },
+          { name: 'stg_iceberg__products' },
+          { name: 'stg_iceberg__stores' },
+        ],
+      })
+      await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg.yml`, stgIcebergYaml)
+
+      await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__orders.sql`, stgIcebergOrdersSql)
+      await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__customers.sql`, stgIcebergCustomersSql)
+      await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__products.sql`, stgIcebergProductsSql)
+      await Bun.write(`${dbtProjectDirpath}/models/staging/stg_iceberg__stores.sql`, stgIcebergStoresSql)
+
+      // Add intermediate models
+      const intIcebergYaml = YAML.stringify({
+        version: 2,
+        sources: [
+          {
+            name: 'int_iceberg',
+            database: 'iceberg',
+            schema: 'project_staging',
+            tables: [
+              { name: 'stg_iceberg__orders' },
+              { name: 'stg_iceberg__customers' },
+              { name: 'stg_iceberg__products' },
+              { name: 'stg_iceberg__stores' },
+            ],
           },
-          marts: {
-            '+materialized': 'view',
-            '+schema': 'marts',
-            '+views_enabled': false,
+        ],
+        models: [{ name: 'int_iceberg__denormalized_orders' }],
+      })
+      await Bun.write(`${dbtProjectDirpath}/models/intermediate/int_iceberg.yml`, intIcebergYaml)
+
+      await Bun.write(
+        `${dbtProjectDirpath}/models/intermediate/int_iceberg__denormalized_orders.sql`,
+        intIcebergDenormalizedOrdersSql
+      )
+
+      // Add marts models
+      const martsIcebergYaml = YAML.stringify({
+        version: 2,
+        sources: [
+          {
+            name: 'marts_iceberg',
+            database: 'iceberg',
+            schema: 'project_intermediate',
+            tables: [{ name: 'int_iceberg__denormalized_orders' }],
+          },
+        ],
+        models: [
+          { name: 'marts_iceberg__general' },
+          { name: 'marts_iceberg__marketing' },
+          { name: 'marts_iceberg__payment' },
+        ],
+      })
+      await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg.yml`, martsIcebergYaml)
+
+      await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__general.sql`, martsGeneralSql)
+      await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__marketing.sql`, martsMarketingSql)
+      await Bun.write(`${dbtProjectDirpath}/models/marts/marts_iceberg__payments.sql`, martsPaymentSql)
+
+      // Add models to dbt_project.yml
+      const dbtProjectYamlJson = YAML.parse(
+        await $`cat ./${projectName}/${projectName}/dbt/${projectName}/dbt_project.yml`.text()
+      )
+      const newDbtProjectYaml = YAML.stringify({
+        ...dbtProjectYamlJson,
+        models: {
+          ...dbtProjectYamlJson.models,
+          [projectName]: {
+            staging: {
+              '+materialized': 'view',
+              '+schema': 'staging',
+              '+views_enabled': false,
+            },
+            intermediate: {
+              '+materialized': 'view',
+              '+schema': 'intermediate',
+              '+views_enabled': false,
+            },
+            marts: {
+              '+materialized': 'view',
+              '+schema': 'marts',
+              '+views_enabled': false,
+            },
           },
         },
-      },
-    })
-    await Bun.write(`${dbtProjectDirpath}/dbt_project.yml`, newDbtProjectYaml)
+      })
+      await Bun.write(`${dbtProjectDirpath}/dbt_project.yml`, newDbtProjectYaml)
+
+      const dbtExampleCodeDuration = endStopwatch(dbtExampleCodeStartTime)
+      s.stop('DBT example code added successfully' + chalk.gray(` [${dbtExampleCodeDuration}ms]`))
+    } catch (err) {
+      const errorMessage = `Sorry, something went wrong while adding DBT example code.\n\n${err}`
+      exitOnError(errorMessage)
+    }
 
     // ----- Add dagster example code -----
 
     // Replace dagster __init__.py to include meltano job and dbt assets/resources
+    s.start('Adding Dagster example code')
+    const dagsterExampleCodeStartTime = startStopwatch()
     await Bun.write(
       `./${projectName}/${projectName}/dagster/${projectName}/${projectName}/__init__.py`,
       exampleDagsterInitPy
     )
+    const dagsterExampleCodeDuration = endStopwatch(dagsterExampleCodeStartTime)
+    s.stop('Dagster example code added successfully' + chalk.gray(` [${dagsterExampleCodeDuration}ms]`))
   }
 
   /**

@@ -447,7 +447,7 @@ export const getSupersetConfig = (projectName: string): SupersetConfig => {
 
       // Add extra_host to superset docker-compose-image-tag.yml
       const dockerComposeImageTagFile = await Bun.file(
-        `${projectName}/superset/docker/docker-compose-image-tag.yml`
+        `${projectName}/superset/docker-compose-image-tag.yml`
       ).text()
       const dockerComposeImageTagJson = YAML.parse(dockerComposeImageTagFile)
       const updatedDockerComposeImageTagJson = R.compose(
@@ -455,7 +455,7 @@ export const getSupersetConfig = (projectName: string): SupersetConfig => {
         R.assocPath(['services', 'superset-worker', 'extra_hosts'], ['"host.docker.internal:host-gateway"'])
       )(dockerComposeImageTagJson)
       const updatedDockerComposeImageTagYaml = YAML.stringify(updatedDockerComposeImageTagJson)
-      await Bun.write(`${projectName}/superset/docker/docker-compose-image-tag.yml`, updatedDockerComposeImageTagYaml)
+      await Bun.write(`${projectName}/superset/docker-compose-image-tag.yml`, updatedDockerComposeImageTagYaml)
 
       // Remove .git
       await execShell(`rm -rf ./${projectName}/superset/.git`)

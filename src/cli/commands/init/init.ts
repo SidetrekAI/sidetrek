@@ -71,7 +71,7 @@ export default async function init(options: any) {
         return await p.select({
           message: `Would you like to include example code?`,
           options: [
-            { value: true, label: 'Yes', hint: '(recommended)' },
+            { value: true, label: 'Yes', hint: 'recommended' },
             { value: false, label: 'No' },
           ],
         })

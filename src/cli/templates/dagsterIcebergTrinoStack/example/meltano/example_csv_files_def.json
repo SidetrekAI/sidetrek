@@ -1,22 +1,22 @@
 [
   {
     "entity": "orders",
-    "path": "../data/orders.csv",
-    "keys": ["order_id"]
+    "path": "../data/example/orders.csv",
+    "keys": ["id"]
   },
   {
     "entity": "customers",
-    "path": "../data/orders.csv",
+    "path": "../data/example/customers.csv",
     "keys": ["id"]
   },
   {
     "entity": "products",
-    "path": "../data/products.csv",
+    "path": "../data/example/products.csv",
     "keys": ["id"]
   },
   {
     "entity": "stores",
-    "path": "../data/stores.csv",
+    "path": "../data/example/stores.csv",
     "keys": ["id"]
   }
 ]
