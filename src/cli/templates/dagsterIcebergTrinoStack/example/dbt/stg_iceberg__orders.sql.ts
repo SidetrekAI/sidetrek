@@ -4,17 +4,17 @@ const sql = `{{
     on_schema_change='sync_all_columns',
     materialized='incremental',
     incremental_strategy='merge',
-    unique_key='order_id',
+    unique_key='id',
     properties={
       "format": "'PARQUET'",
-      "sorted_by": "ARRAY['order_id']",
+      "sorted_by": "ARRAY['id']",
     }
   )
 }}
  
 with source as (
   select
-    CAST(order_id AS VARCHAR) AS order_id,
+    CAST(id AS VARCHAR) AS order_id,
     CAST(created_at AS TIMESTAMP) AS order_created_at,
     CAST(qty AS DECIMAL) AS qty,
     CAST(product_id AS VARCHAR) AS product_id,
