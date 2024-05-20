@@ -446,13 +446,11 @@ export const getSupersetConfig = (projectName: string): SupersetConfig => {
       await Bun.write(`${projectName}/superset/docker/requirements-local.txt`, 'trino')
 
       // Add extra_host to superset docker-compose-image-tag.yml
-      const dockerComposeImageTagFile = await Bun.file(
-        `${projectName}/superset/docker-compose-image-tag.yml`
-      ).text()
+      const dockerComposeImageTagFile = await Bun.file(`${projectName}/superset/docker-compose-image-tag.yml`).text()
       const dockerComposeImageTagJson = YAML.parse(dockerComposeImageTagFile)
       const updatedDockerComposeImageTagJson = R.compose(
-        R.assocPath(['services', 'superset', 'extra_hosts'], ['"host.docker.internal:host-gateway"']),
-        R.assocPath(['services', 'superset-worker', 'extra_hosts'], ['"host.docker.internal:host-gateway"'])
+        R.assocPath(['services', 'superset', 'extra_hosts'], ['host.docker.internal:host-gateway']),
+        R.assocPath(['services', 'superset-worker', 'extra_hosts'], ['host.docker.internal:host-gateway'])
       )(dockerComposeImageTagJson)
       const updatedDockerComposeImageTagYaml = YAML.stringify(updatedDockerComposeImageTagJson)
       await Bun.write(`${projectName}/superset/docker-compose-image-tag.yml`, updatedDockerComposeImageTagYaml)
