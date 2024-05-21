@@ -4,10 +4,10 @@ const sql = `{{
     on_schema_change='sync_all_columns',
     materialized='incremental',
     incremental_strategy='merge',
-    unique_key='id',
+    unique_key='order_id',
     properties={
       "format": "'PARQUET'",
-      "sorted_by": "ARRAY['id']",
+      "sorted_by": "ARRAY['order_id']",
     }
   )
 }}
