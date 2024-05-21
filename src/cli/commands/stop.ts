@@ -5,8 +5,8 @@ const cwd = process.cwd()
 
 export default async function stop() {
   // Stop the core services
-  await $`docker-compose stop`
+  await $`docker compose stop`
 
   // Stop superset
-  await $`docker-compose stop`.cwd(`${cwd}/superset`)
+  await $`docker compose stop`.cwd(`${cwd}/superset`)
 }

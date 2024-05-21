@@ -314,7 +314,12 @@ export const getIcebergConfig = (projectName: string): IcebergConfig => {
         'CATALOG_JDBC_PASSWORD=${' + ICEBERG_PG_CATALOG_PASSWORD_ENVNAME + '}',
       ],
       networks: [SHARED_NETWORK_NAME],
-      depends_on: ['iceberg-pg-catalog'],
+      depends_on: {
+        'iceberg-pg-catalog': {
+          condition: 'service_healthy',
+          restart: true,
+        },
+      },
     },
     'iceberg-pg-catalog': {
       image: 'postgres:15-alpine',
