@@ -1,0 +1,15 @@
+services:
+  app_db:
+    image: postgres:16-alpine
+    container_name: app_db
+    environment:
+      - POSTGRES_DB=${APP_DB_NAME}
+      - POSTGRES_USER=${APP_DB_USER}
+      - POSTGRES_PASSWORD=${APP_DB_PASS}
+    ports:
+      - "5432:5432"
+    volumes:
+      - app_db_data:/var/lib/postgresql/data
+
+volumes:
+  app_db_data:

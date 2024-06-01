@@ -15,6 +15,13 @@
 
 - Run `sidetrek --help` to see all available commands and options
 
+## Demo
+
+- Start recording: `asciinema rec demo.cast`
+- Stop recording: `ctrl + d`
+- Replay in terminal: `asciinema play demo.cast`
+- Convert to gif: `agg --font-family Hack --no-loop demo.cast demo.gif`
+
 ## Gotchas
 
 - rest-iceberg cannot access minio (`UNKNOWN_HOST error: lakehouse.minio`) due to awd sdk default changes to path-style-access

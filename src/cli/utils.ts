@@ -1,11 +1,10 @@
 import * as R from 'ramda'
 import { $ } from 'bun'
 import YAML from 'yaml'
-import * as p from '@clack/prompts'
+import ky from 'ky'
 import chalk from 'chalk'
 import type { EnvFileObj, PromiseFactory, ShellResponse } from './types'
-import { colors, S_BAR, SHARED_NETWORK_NAME } from './constants'
-import type { ToolConfig } from './toolConfigs'
+import { colors, S_BAR } from './constants'
 
 export const getPackageVersion = async () => {
   const packageJson = await import("../../package.json")
@@ -193,4 +192,9 @@ export const createOrUpdateEnvFile = async (envFilePath: string, envFileObj: Env
     )(editedEnvFileObj)
     return await execShell(`echo '${editedEnvFileStr}' > ${envFilePath}`)
   }
+}
+
+export const track = async () => {
+  // Track user actions
+  const json = await ky.post('https://example.com', {json: {foo: true}}).json()
 }

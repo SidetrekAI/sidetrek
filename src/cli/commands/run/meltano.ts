@@ -13,6 +13,6 @@ export default async function runMeltano(meltanoCmd: string[], argv: string[]) {
   const meltanoCmdStr = meltanoCmd.join(' ')
   const optionsStr = extractOptions(argv)
 
-  // // Pass the command to meltano CLI
-  // await $`poetry run meltano ${meltanoCmdStr} ${optionsStr}`.cwd(meltanoProjectDir)
+  // Pass the command to meltano CLI
+  await $`poetry run meltano ${meltanoCmdStr} ${optionsStr}`.cwd(meltanoProjectDir)
 }
