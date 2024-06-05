@@ -1,6 +1,5 @@
 
-<center><h2>The fastest way to build a modern data stack using open-source tools</h2></center>
-<center><img src="https://docs.sidetrek.com/_astro/logo-0.9g6JpYzQ_n2Xbz.svg" width="50%"/></center>
+<center><img src="https://raw.githubusercontent.com/sidetrekAI/sidetrek-cli/master/.github/logo-tagline-light-svg.svg" width="50%"/></center>
 <center>
 <img src="https://img.shields.io/github/license/SidetrekAI/sidetrek-cli?color=%23866eea"/>
 <img src="https://img.shields.io/github/last-commit/SidetrekAI/sidetrek-cli?color=%23ff4d84&logo=github&logoColor=white"/>
