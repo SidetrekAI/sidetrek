@@ -20,7 +20,7 @@ export interface EnvFileObj {
 }
 
 export interface SidetrekConfig {
-  [key: string]: SidetrekConfigServices
+  services: SidetrekConfigServices
 }
 
 export interface SidetrekConfigServices {

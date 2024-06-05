@@ -1,7 +1,7 @@
 import * as R from 'ramda'
 import { Command } from 'commander'
 import { colors } from './constants'
-import { getPackageVersion } from './utils'
+import { getPackageVersion, track } from './utils'
 import init from './commands/init/init'
 import start from './commands/start'
 import stop from './commands/stop'
@@ -88,6 +88,12 @@ export default async function runCli() {
     .action(() => {
       runTrinoShell()
     })
+
+  // Track every command
+  program.hook('postAction', async (thisCommand, actionCommand) => {
+    const trackingPayload = { command: actionCommand.name() }
+    track(trackingPayload)
+  })
 
   program.parse(process.argv)
 }

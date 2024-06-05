@@ -2,6 +2,7 @@ import chalk from 'chalk'
 import { $ } from 'bun'
 import * as R from 'ramda'
 import * as p from '@clack/prompts'
+import { v4 as uuidv4 } from 'uuid'
 import YAML from 'yaml'
 import {
   execShell,
@@ -10,6 +11,7 @@ import {
   createDockerComposeFile,
   startStopwatch,
   createOrUpdateEnvFile,
+  track,
 } from '@cli/utils'
 import { getIcebergConfig, getMinioConfig, getSupersetConfig, getTrinoConfig } from '@cli/toolConfigs'
 import {
@@ -132,6 +134,11 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     },
   }
   await Bun.write(`./${projectName}/sidetrek.config.yaml`, YAML.stringify(sidetrekConfigYaml))
+
+  const userinfo = {
+    generatedUserId: uuidv4(),
+  }
+  await Bun.write(`./${projectName}/.sidetrek/userinfo.json`, JSON.stringify(userinfo))
 
   if (poetryNewResp?.error) {
     const errorMessage = `Sorry, something went wrong while scaffolding the project via Poetry.\n\n${poetryNewResp.error?.stderr}`
@@ -559,4 +566,11 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   s.start('Calculating total duration')
   const totalDuration = endStopwatch(startTime)
   s.stop(chalk.gray(`Total duration: ${totalDuration}ms`))
+
+  /**
+   *
+   * Track success
+   *
+   */
+  track({ command: 'init', metadata: { success: true, cliInputs, duration: totalDuration } })
 }

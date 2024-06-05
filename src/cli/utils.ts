@@ -2,12 +2,16 @@ import * as R from 'ramda'
 import { $ } from 'bun'
 import YAML from 'yaml'
 import ky from 'ky'
+import { v4 as uuidv4 } from 'uuid'
+import fs from 'node:fs'
 import chalk from 'chalk'
 import type { EnvFileObj, PromiseFactory, ShellResponse } from './types'
 import { colors, S_BAR } from './constants'
 
+const cwd = process.cwd()
+
 export const getPackageVersion = async () => {
-  const packageJson = await import("../../package.json")
+  const packageJson = await import('../../package.json')
   return packageJson.version
 }
 
@@ -194,7 +198,48 @@ export const createOrUpdateEnvFile = async (envFilePath: string, envFileObj: Env
   }
 }
 
-export const track = async () => {
+export const retrieveGeneratedUserId = async () => {
+  // Check if the uuid exists in .sidetrek
+  const userinfoExists = await Bun.file(`${cwd}/.sidetrek/userinfo.json`).exists()
+
+  // If not, create it and store it
+  if (!userinfoExists) {
+    const generatedUserId = uuidv4()
+    await Bun.write(`${cwd}/.sidetrek/userinfo.json`, JSON.stringify({ generatedUserId }))
+    return generatedUserId
+  }
+
+  // If it exists, but doesn't have uuid in it
+  const userinfo = await Bun.file(`${cwd}/.sidetrek/userinfo.json`).json()
+
+  if (!userinfo?.generatedUserId) {
+    const generatedUserId = uuidv4()
+    const updatedUserinfo = { ...userinfo, generatedUserId }
+    await Bun.write(`${cwd}/.sidetrek/userinfo.json`, JSON.stringify(updatedUserinfo))
+    return generatedUserId
+  }
+
+  return userinfo.generatedUserId
+}
+
+interface TrackingArgs {
+  command: string
+  metadata?: { [key: string]: any }
+}
+
+export const track = async (payload: TrackingArgs) => {
   // Track user actions
-  const json = await ky.post('https://example.com', {json: {foo: true}}).json()
+  const cliTrackingServerUrl =
+    process.env.BUN_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
+  const trackingRes = await ky
+    .post(cliTrackingServerUrl, {
+      json: {
+        generated_user_id: await retrieveGeneratedUserId(),
+        ...payload,
+      },
+      retry: 5,
+    })
+    .json()
+
+  return trackingRes
 }

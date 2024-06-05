@@ -4,7 +4,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import chalk from 'chalk'
 import { colors } from '../../constants'
 import { validateProjectName } from '../../validators'
-import { clackLog, endStopwatch, startStopwatch } from '../../utils'
+import { clackLog, endStopwatch, startStopwatch, track } from '../../utils'
 import { buildDagsterIcebergTrinoStack } from './stacks/dagsterIcebergTrinoStack'
 
 // NOTE: cwd is the PARENT of the root project dir (because it's not created yet before `init`)
@@ -84,7 +84,7 @@ export default async function init(options: any) {
           await buildDagsterIcebergTrinoStack(results)
         }
       },
-      outro: async () => {
+      outro: async ({ results }) => {
         const outroMessage =
           colors.sidetrekPurple(`You're all set - enjoy building your new data project! 🚀`) +
           colors.sidetrekLightPurple(
