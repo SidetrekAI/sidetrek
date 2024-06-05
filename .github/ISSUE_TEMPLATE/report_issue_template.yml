@@ -85,4 +85,9 @@ body:
       description: Add any other context about the problem here.
       placeholder: |
         Please provide any additional information that might be helpful in solving the issue.
+  - type: markdown
+    attributes:
+      value: >
+        <h3>Thank you for contributing to Sidetrek</h3>
+        <p>If you have a change ready to submit, you don’t need to create an issue. You can directly send a PR and one of our maintainers will review it.</p>
       
