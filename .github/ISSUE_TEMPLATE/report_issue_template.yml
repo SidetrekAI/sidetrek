@@ -1,0 +1,88 @@
+name: Issue Report Template
+description: Report an issue to improve Sidetrek.
+title: "[Bug] <title>"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        <p align="center">
+          <a target="_blank" href="https://sidetrek.com/">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/sidetrekAI/sidetrek-cli/master/.github/logo-tagline-dark-svg.svg">
+              <img alt="dagster logo" src="https://raw.githubusercontent.com/sidetrekAI/sidetrek-cli/master/.github/logo-tagline-light-svg.svg" width="auto" height="80">
+            </picture>
+          </a>
+        </p>
+  - type: markdown
+    attributes:
+      value: >
+        Thank you for taking the time to fill out this bug report and improve Sidetrek. Please follow the template while reporting an issue.
+  - type: input
+    attributes:
+      label: Sidetrek version
+      description: Which version of Sidetrek CLI are you using?
+      placeholder: "Copy and paste the output from `sidetrek --version`."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Current Behavior
+      description: Provide a brief details of the issue.
+      placeholder: |
+        Please provide a brief description of the issue.
+        When possible, add error logs, screenshots or video links that display the issue.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: Provide a brief description of what you expect to happen.
+      placeholder: |
+        Please provide a brief description of what is expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce this behavior.
+      placeholder: |
+        Please provide step by step instructions on how to reproduce this issue.
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Python Version
+      description: Which Python version are you using?
+      multiple: false
+      options:
+        - "v3.10"
+        - "v3.11"
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Operating System
+      description: Which OS are you using?
+      multiple: false
+      options:
+        - "macOS x64"
+        - "macOS ARM"
+        - "Linux x64"
+        - "Linux ARM"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Docker version
+      description: Which version of Docker are you using?
+      placeholder: "Copy and paste the output from `docker --version`."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional Information
+      description: Add any other context about the problem here.
+      placeholder: |
+        Please provide any additional information that might be helpful in solving the issue.
+      
