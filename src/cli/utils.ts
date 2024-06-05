@@ -1,11 +1,19 @@
 import * as R from 'ramda'
 import { $ } from 'bun'
 import YAML from 'yaml'
-import * as p from '@clack/prompts'
+import ky from 'ky'
+import { v4 as uuidv4 } from 'uuid'
+import fs from 'node:fs'
 import chalk from 'chalk'
 import type { EnvFileObj, PromiseFactory, ShellResponse } from './types'
-import { colors, S_BAR, SHARED_NETWORK_NAME } from './constants'
-import type { ToolConfig } from './toolConfigs'
+import { colors, S_BAR } from './constants'
+
+const cwd = process.cwd()
+
+export const getPackageVersion = async () => {
+  const packageJson = await import('../../package.json')
+  return packageJson.version
+}
 
 export const startStopwatch = (): number => {
   return new Date().getTime()
@@ -86,17 +94,18 @@ export const resolvePromiseFactoriesSeq = async (promiseFactories: PromiseFactor
 // Execute long running bun shell commands for Clack
 
 interface ExecShellOptions {
+  cwd?: string
   enableLogging?: boolean
 }
 
 export const execShell = async (command: string, options?: ExecShellOptions): Promise<ShellResponse> => {
-  const { enableLogging = false } = options || {}
+  const { cwd = process.cwd(), enableLogging = false } = options || {}
 
   try {
     let counter = 0
 
     // CAVEAT: must wrap the command in raw - otherwise, it won't work properly due to character escaping issues
-    for await (let line of $`${{ raw: command }}`.lines()) {
+    for await (let line of $`${{ raw: command }}`.cwd(cwd).lines()) {
       if (enableLogging) {
         if (counter === 0) {
           clackLog('', { prefix: '\n' })
@@ -136,14 +145,13 @@ export const genDockerfile = () => {}
 
 interface GenDockerComposeArgs {
   projectName: string
-  toolDockerComposeObjs: ToolConfig[]
+  toolDockerComposeObjs: any[]
   volumes: { [key: string]: any }
   networks: { [key: string]: any }
 }
 
 export const genDockerCompose = ({ toolDockerComposeObjs, volumes, networks }: GenDockerComposeArgs): any => {
   return {
-    version: '3',
     services: {
       ...toolDockerComposeObjs.reduce((acc, curr) => ({ ...acc, ...curr }), {}),
     },
@@ -157,21 +165,81 @@ export const createDockerComposeFile = async (dockerComposeObj: any, filePath: s
   return await execShell(`echo '${dockerComposeYaml}' > ${filePath}`)
 }
 
+// IDEMPOTENT
 export const createOrUpdateEnvFile = async (envFilePath: string, envFileObj: EnvFileObj): Promise<ShellResponse> => {
   if (!envFilePath) throw new Error('No env file path provided')
   if (!envFileObj) throw new Error('No env file object provided')
 
   const dockerEnv = Bun.file(envFilePath)
-  const dockerEnvStr = await dockerEnv.text()
-  const existingEnvFileObj: EnvFileObj = dockerEnvStr.split('\n').reduce((acc, curr) => {
-    const [key, value] = curr.split('=')
-    return { ...acc, [key]: value }
-  }, {})
-  const editedEnvFileObj: EnvFileObj = { ...existingEnvFileObj, ...envFileObj }
-  const editedEnvFileStr = R.compose(
-    R.join('\n'),
-    R.map(([k, v]) => `${k}=${v}`),
-    R.toPairs
-  )(editedEnvFileObj)
-  return await execShell(`echo '${editedEnvFileStr}' > ${envFilePath}`)
+
+  // If the env file doesn't exist, create it
+  if (!(await dockerEnv.exists())) {
+    const envFileStr = R.compose(
+      R.join('\n'),
+      R.map(([k, v]) => `${k}=${v}`),
+      R.toPairs
+    )(envFileObj)
+    return await execShell(`echo '${envFileStr}' > ${envFilePath}`)
+  } else {
+    const dockerEnvStr = await dockerEnv.text()
+    const existingEnvFileObj: EnvFileObj = dockerEnvStr.split('\n').reduce((acc, curr) => {
+      const [key, value] = curr.split('=')
+      return { ...acc, [key]: value }
+    }, {})
+    const editedEnvFileObj: EnvFileObj = { ...existingEnvFileObj, ...envFileObj }
+    const editedEnvFileStr = R.compose(
+      R.join('\n'),
+      R.map(([k, v]) => {
+        return !v ? k : `${k}=${v}` // Handle comments!
+      }),
+      R.toPairs
+    )(editedEnvFileObj)
+    return await execShell(`echo '${editedEnvFileStr}' > ${envFilePath}`)
+  }
+}
+
+export const retrieveGeneratedUserId = async () => {
+  // Check if the uuid exists in .sidetrek
+  const userinfoExists = await Bun.file(`${cwd}/.sidetrek/userinfo.json`).exists()
+
+  // If not, create it and store it
+  if (!userinfoExists) {
+    const generatedUserId = uuidv4()
+    await Bun.write(`${cwd}/.sidetrek/userinfo.json`, JSON.stringify({ generatedUserId }))
+    return generatedUserId
+  }
+
+  // If it exists, but doesn't have uuid in it
+  const userinfo = await Bun.file(`${cwd}/.sidetrek/userinfo.json`).json()
+
+  if (!userinfo?.generatedUserId) {
+    const generatedUserId = uuidv4()
+    const updatedUserinfo = { ...userinfo, generatedUserId }
+    await Bun.write(`${cwd}/.sidetrek/userinfo.json`, JSON.stringify(updatedUserinfo))
+    return generatedUserId
+  }
+
+  return userinfo.generatedUserId
+}
+
+interface TrackingArgs {
+  command: string
+  metadata?: { [key: string]: any }
+}
+
+export const track = async (payload: TrackingArgs) => {
+  // Track user actions
+  const cliTrackingServerUrl =
+    process.env.BUN_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
+  const trackingRes = await ky
+    .post(cliTrackingServerUrl, {
+      json: {
+        generated_user_id: await retrieveGeneratedUserId(),
+        ...payload,
+      },
+      retry: 5,
+    })
+    .json()
+
+  return trackingRes
 }

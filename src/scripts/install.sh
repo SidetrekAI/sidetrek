@@ -8,3 +8,4 @@ cp ./$APP_NAME $INSTALL_DIRNAME
 
 # Give execute permissions
 chmod +x $INSTALL_DIRNAME/$APP_NAME
+

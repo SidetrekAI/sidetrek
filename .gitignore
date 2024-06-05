@@ -180,3 +180,6 @@ dist
 playground.ts
 /temp
 /release
+/test_proj*
+/demo/demo_project*
+.sidetrek
