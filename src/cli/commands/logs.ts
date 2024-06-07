@@ -1,6 +1,5 @@
 import * as p from '@clack/prompts'
-import { colors } from '@cli/constants'
-import type { ShellResponse, SidetrekConfigServices } from '@cli/types'
+import type { SidetrekConfigServices } from '@cli/types'
 import { $ } from 'bun'
 import * as R from 'ramda'
 import YAML from 'yaml'
@@ -8,32 +7,37 @@ import YAML from 'yaml'
 const cwd = process.cwd()
 
 export default async function logs(service: string | undefined, options: any) {
-  const logCmdOptions = R.compose(
-    R.join(' '),
-    R.map(([opt, val]: [string, any]) => {
-      return typeof val == 'boolean' ? `--${opt}` : `--${opt} ${val}`
-    }),
-    R.toPairs
-  )(options)
+  const logCmdOptions = R.isEmpty(options)
+    ? ''
+    : R.compose(
+        R.join(' '),
+        R.map(([opt, val]: [string, any]) => {
+          return typeof val == 'boolean' ? `--${opt}` : `--${opt} ${val}`
+        }),
+        R.toPairs
+      )(options)
 
   if (!service) {
     console.log('\n')
     const s = p.spinner()
 
-    const sidetrekConfigYamlJson = YAML.parse(await $`cat ./sidetrek.config.yml`.text())
+    const sidetrekConfigYamlJson = YAML.parse(await $`cat ./sidetrek.config.yaml`.text())
     const services: SidetrekConfigServices = sidetrekConfigYamlJson.services
     const servicesWithLogs = R.compose(
-      R.dissoc('dagster'), // exclude dagster as it's run separately and doesn't have logs cli command
-      R.pickBy((svc) => 'port' in svc, services) as any
-    )
+      R.map(([svc, svcObj]) => svc) as any,
+      R.filter(([svc, svcObj]) => svcObj.logs === true),
+      R.toPairs as any
+    )(services) as string[]
 
-    const serviceOptions = R.compose(
-      R.map((svcName: string) => {
-        const svc = services[svcName]
-        return { label: svc.title, value: svcName as any }
-      }),
-      R.keys as any
-    )(servicesWithLogs)
+    if (R.isEmpty(servicesWithLogs)) {
+      p.cancel('No services have logs enabled.')
+      process.exit(0)
+    }
+
+    const serviceOptions = servicesWithLogs.map((svcName: string) => {
+      const svc = services[svcName]
+      return { label: svc.title, value: svcName as any }
+    })
 
     await p.group({
       service: async () => {
@@ -43,8 +47,8 @@ export default async function logs(service: string | undefined, options: any) {
         })
       },
       runLogs: async ({ results }) => {
-        const service = results.service as unknown as string
-        await runLogsCommand(service, logCmdOptions)
+        const _service = results.service as unknown as string
+        await runLogsCommand(_service, logCmdOptions)
       },
     })
   } else {
@@ -53,13 +57,16 @@ export default async function logs(service: string | undefined, options: any) {
 }
 
 const runLogsCommand = async (service: string, options: string) => {
-  console.log('service in logs command', service)
-  console.log('options in logs command', options)
-
-  if (service === 'superset') {
-    // Superset runs separately from the other services
-    await $`docker compose logs superset ${options}`.cwd(`${cwd}/superset`)
-  } else {
-    await $`docker compose logs ${service} ${options}`
+  try {
+    if (service === 'superset') {
+      // Superset runs separately from the other services
+      const cmd = `docker compose logs superset ${options}`
+      await $`${{ raw: cmd }}`.cwd(`${cwd}/superset`)
+    } else {
+      const cmd = `docker compose logs ${service} ${options}`
+      await $`${{ raw: cmd }}`
+    }
+  } catch (err) {
+    // Silently exit since docker will print the error
   }
 }

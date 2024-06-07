@@ -12,6 +12,9 @@ export const colors = {
   lightGray: chalk.hex('#a1a1a1'),
 }
 
+export const SUPPORTED_PYTHON_VERSIONS = ['3.7', '3.8']
+export const SUPPORTED_PYTHON_VERSIONS_STR = '3.10-3.11'
+
 const unicode = isUnicodeSupported()
 const s = (c: string, fallback: string) => (unicode ? c : fallback)
 export const S_BAR = s('│', '|')

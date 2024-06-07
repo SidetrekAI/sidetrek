@@ -31,4 +31,5 @@ export interface SidetrekConfigService {
   title: string
   description?: string
   port?: string
+  logs?: boolean
 }

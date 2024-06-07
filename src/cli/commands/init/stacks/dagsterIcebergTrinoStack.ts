@@ -1,8 +1,10 @@
 import chalk from 'chalk'
 import { $ } from 'bun'
+import fs from 'node:fs'
 import * as R from 'ramda'
 import * as p from '@clack/prompts'
 import { v4 as uuidv4 } from 'uuid'
+import semver from 'semver'
 import YAML from 'yaml'
 import {
   execShell,
@@ -43,6 +45,8 @@ import {
   TRINO_HOST_PORT,
   SUPERSET_HOST_PORT,
   ICEBERG_PG_HOST_PORT,
+  SUPPORTED_PYTHON_VERSIONS,
+  SUPPORTED_PYTHON_VERSIONS_STR,
 } from '@cli/constants'
 import gitignore from '@cli/templates/gitignore'
 import { initTool } from '../../utils'
@@ -62,6 +66,10 @@ import martsMarketingSql from '@cli/templates/dagsterIcebergTrinoStack/example/d
 import martsPaymentSql from '@cli/templates/dagsterIcebergTrinoStack/example/dbt/marts_iceberg__payment.sql'
 import type { SidetrekConfig } from '@cli/types'
 
+interface ExitOnErrorOptionsArgs {
+  skipCleanup?: boolean
+}
+
 const s = p.spinner()
 
 // TODO: Make meltano, dbt, superset optional (the rest is not optional)
@@ -77,8 +85,19 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    * Helper functions
    *
    */
-  const exitOnError = async (errorMessage: string): Promise<void> => {
-    await cleanupOnFailure()
+  const exitOnError = async (errorMessage: string, options: ExitOnErrorOptionsArgs = {}): Promise<void> => {
+    const { skipCleanup = false } = options
+
+    if (!skipCleanup) {
+      await cleanupOnFailure()
+    }
+
+    // Track the error
+    await track({
+      command: 'init',
+      metadata: { error: errorMessage },
+    })
+
     p.cancel(errorMessage)
     return process.exit(0)
   }
@@ -89,9 +108,37 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   /**
    *
+   * Make sure prerequisites are installed
+   *
+   */
+  // Check if the supported python version is installed
+  // const userPythonVersionResp = await $`python --version`.text()
+  // if (!userPythonVersionResp.includes('Python ')) {
+  //   const errorMessage = `Python is not installed. Please install Python ${SUPPORTED_PYTHON_VERSIONS_STR} and try again.`
+  //   await exitOnError(errorMessage, { skipCleanup: true })
+  // }
+
+  // const userPythonVersion = userPythonVersionResp.split('Python ')[1]
+  // const isSupportedPythonVersion = semver.satisfies(userPythonVersion, SUPPORTED_PYTHON_VERSIONS.join(' || '))
+
+  // if (!isSupportedPythonVersion) {
+  //   const errorMessage = `Python version ${userPythonVersion} is not supported. Please install Python ${SUPPORTED_PYTHON_VERSIONS_STR} and try again.`
+  //   await exitOnError(errorMessage, { skipCleanup: true })
+  // }
+
+  /**
+   *
    * Scaffold the project
    *
    */
+  // First check if the project dir already exists
+  const projectDirExists = fs.existsSync(projectName)
+
+  if (projectDirExists) {
+    const errorMessage = `The directory ${projectName} already exists. Please choose a different project name.`
+    await exitOnError(errorMessage, { skipCleanup: true })
+  }
+
   // `poetry new` -> remove tests -> create sidetrek dir -> add sidetrek.config.yaml to project root
   s.start('Scaffolding your project')
   const poetryNewStartTime = startStopwatch()
@@ -114,22 +161,27 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
       minio: {
         title: 'Minio',
         port: MINIO_SERVER_HOST_PORT,
+        logs: true,
       },
       'iceberg-rest': {
         title: 'Iceberg REST Catalog',
         port: ICEBERG_REST_HOST_PORT,
+        logs: true,
       },
       'iceberg-pg-catalog': {
         title: 'Iceberg Postgres Catalog',
         port: ICEBERG_PG_HOST_PORT,
+        logs: true,
       },
       trino: {
         title: 'Trino',
         port: TRINO_HOST_PORT,
+        logs: true,
       },
       superset: {
         title: 'Superset',
         port: SUPERSET_HOST_PORT,
+        logs: true,
       },
     },
   }
@@ -142,7 +194,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   if (poetryNewResp?.error) {
     const errorMessage = `Sorry, something went wrong while scaffolding the project via Poetry.\n\n${poetryNewResp.error?.stderr}`
-    exitOnError(errorMessage)
+    await exitOnError(errorMessage)
   }
 
   // Must update the pyproject.toml file to set the correct python version
@@ -171,7 +223,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   if (dagsterInitResp?.error) {
     const errorMessage = `Sorry, something went wrong while intializing Dagster.\n\n${dagsterInitResp.error?.stderr}`
-    exitOnError(errorMessage)
+    await exitOnError(errorMessage)
   } else {
     const dagsterInitDuration = endStopwatch(dagsterInitStartTime)
     s.stop('Dagster set up successfully.' + chalk.gray(` [${dagsterInitDuration}ms]`))
@@ -184,7 +236,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   if (dbtInitResp?.error) {
     const errorMessage = `Sorry, something went wrong while intializing DBT.\n\n${dbtInitResp.error?.stderr}`
-    exitOnError(errorMessage)
+    await exitOnError(errorMessage)
   } else {
     const dbtInitDuration = endStopwatch(dbtInitStartTime)
     s.stop('DBT set up successfully.' + chalk.gray(` [${dbtInitDuration}ms]`))
@@ -198,7 +250,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   if (meltanoInitResp?.error) {
     const errorMessage = `Sorry, something went wrong while intializing Meltano.\n\n${meltanoInitResp.error?.stderr}`
-    exitOnError(errorMessage)
+    await exitOnError(errorMessage)
   } else {
     const meltanoInitDuration = endStopwatch(meltanoInitStartTime)
     s.stop('Meltano set up successfully.' + chalk.gray(` [${meltanoInitDuration}ms]`))
@@ -211,7 +263,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   if (trinoInitResp?.error) {
     const errorMessage = `Sorry, something went wrong while intializing Trino.\n\n${trinoInitResp.error?.stderr}`
-    exitOnError(errorMessage)
+    await exitOnError(errorMessage)
   } else {
     const trinoInitDuration = endStopwatch(trinoInitStartTime)
     s.stop('Trino set up successfully.' + chalk.gray(` [${trinoInitDuration}ms]`))
@@ -224,7 +276,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   if (supersetInitResp?.error) {
     const errorMessage = `Sorry, something went wrong while intializing Superset.\n\n${supersetInitResp.error?.stderr}`
-    exitOnError(errorMessage)
+    await exitOnError(errorMessage)
   } else {
     const supersetInitDuration = endStopwatch(supersetInitStartTime)
     s.stop('Superset set up successfully.' + chalk.gray(` [${supersetInitDuration}ms]`))
@@ -262,7 +314,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   if (dcResp?.error) {
     const errorMessage = `Sorry, something went wrong while generating docker-compose.yaml file.\n\n${dcResp.error?.stderr}`
-    exitOnError(errorMessage)
+    await exitOnError(errorMessage)
   } else {
     const dcDuration = endStopwatch(dcStartTime)
     s.stop('Docker compose file generated successfully.' + chalk.gray(` [${dcDuration}ms]`))
@@ -324,7 +376,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   if (dagsterMeltanoResp?.error) {
     const errorMessage = `Sorry, something went wrong while adding Dagster/Meltano connection.\n\n${dagsterMeltanoResp.error?.stderr}`
-    exitOnError(errorMessage)
+    await exitOnError(errorMessage)
   } else {
     const dagsterMeltanoDuration = endStopwatch(dagsterMeltanoStartTime)
     s.stop('Dagster/Meltano connection added successfully.' + chalk.gray(` [${dagsterMeltanoDuration}ms]`))
@@ -337,7 +389,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   if (dagsterDbtResp?.error) {
     const errorMessage = `Sorry, something went wrong while adding Dagster/DBT connection.\n\n${dagsterDbtResp.error?.stderr}`
-    exitOnError(errorMessage)
+    await exitOnError(errorMessage)
   } else {
     const dagsterDbtDuration = endStopwatch(dagsterDbtStartTime)
     s.stop('Dagster/DBT connection added successfully.' + chalk.gray(` [${dagsterDbtDuration}ms]`))
@@ -407,7 +459,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
       s.stop('Copied example data successfully' + chalk.gray(` [${exampleDataCopyDuration}ms]`))
     } catch (err) {
       const errorMessage = `Sorry, something went wrong while copying example data.\n\n${err}`
-      exitOnError(errorMessage)
+      await exitOnError(errorMessage)
     }
 
     // Install the meltano extractor/loader
@@ -419,7 +471,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
     if (meltanoInstallResp?.error) {
       const errorMessage = `Sorry, something went wrong while installing meltano tap-csv extractor and target-iceberg loader.\n\n${meltanoInstallResp.error?.stderr}`
-      exitOnError(errorMessage)
+      await exitOnError(errorMessage)
     } else {
       const meltanoInstallDuration = endStopwatch(meltanoInstallStartTime)
       s.stop(
@@ -542,7 +594,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
       s.stop('DBT example code added successfully' + chalk.gray(` [${dbtExampleCodeDuration}ms]`))
     } catch (err) {
       const errorMessage = `Sorry, something went wrong while adding DBT example code.\n\n${err}`
-      exitOnError(errorMessage)
+      await exitOnError(errorMessage)
     }
 
     // ----- Add dagster example code -----

@@ -6,6 +6,12 @@
 - Run `./build/sidetrek <command>` to test out the changes
 - NOTE: use the name `test_proj*` for testing the CLI - it's added to .gitignore
 
+### To test tracking
+Inside sidetrek-cli-tracking repo:
+- Run `docker compose up` to start the tracking DB
+- Run the dev server
+- (Optional) Run the migration if required
+
 ## Release
 
 - Run `bun run release` to test things locally before release
