@@ -227,11 +227,13 @@ interface TrackingArgs {
 }
 
 export const track = async (payload: TrackingArgs) => {
-  // if (process.env.BUN_ENV === 'development') return
+  // if (process.env.CUSTOM_ENV === 'development') return
 
   // Track user actions
+  console.log('process.env.CUSTOM_ENV', process.env.CUSTOM_ENV)
   const cliTrackingServerUrl =
-    process.env.BUN_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
+    process.env.CUSTOM_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
+  console.log('cliTrackingServerUrl', cliTrackingServerUrl)
 
   try {
     console.log('Tracking cli usage...', payload)
