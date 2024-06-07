@@ -23,10 +23,10 @@ Inside sidetrek-cli-tracking repo:
 
 ## Demo
 
-- Start recording: `asciinema rec demo.cast`
-- Stop recording: `ctrl + d`
-- Replay in terminal: `asciinema play demo.cast`
-- Convert to gif: `agg --font-family Hack --no-loop demo.cast demo.gif`
+- Open the Warp terminal and set the correct Zoom
+- Record with quicktime (shift + cmd + 5)
+- Go to veed.io and edit -> then 2x the video
+- Convert the resulting mp4 to webp
 
 ## Gotchas
 

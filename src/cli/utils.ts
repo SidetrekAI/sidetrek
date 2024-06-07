@@ -234,6 +234,7 @@ export const track = async (payload: TrackingArgs) => {
     process.env.BUN_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
 
   try {
+    console.log('Tracking cli usage...', payload)
     const trackingRes = await ky
       .post(cliTrackingServerUrl, {
         json: {
@@ -246,7 +247,7 @@ export const track = async (payload: TrackingArgs) => {
 
     return trackingRes
   } catch (err: any) {
-    // console.log('Something went wrong while tracking cli usage', err)
+    console.log('Something went wrong while tracking cli usage', err)
     // Silently return in case of tracking failure - we don't want it affecting cli functionality
     return
   }
