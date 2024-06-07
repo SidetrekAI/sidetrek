@@ -227,11 +227,11 @@ interface TrackingArgs {
 }
 
 export const track = async (payload: TrackingArgs) => {
-  // if (process.env.BUN_ENV === 'development') return
+  // if (process.env.CUSTOM_ENV === 'development') return
 
   // Track user actions
   const cliTrackingServerUrl =
-    process.env.BUN_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
+    process.env.CUSTOM_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
 
   try {
     const trackingRes = await ky
@@ -246,7 +246,6 @@ export const track = async (payload: TrackingArgs) => {
 
     return trackingRes
   } catch (err: any) {
-    // console.log('Something went wrong while tracking cli usage', err)
     // Silently return in case of tracking failure - we don't want it affecting cli functionality
     return
   }
