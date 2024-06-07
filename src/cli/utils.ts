@@ -92,7 +92,6 @@ export const resolvePromiseFactoriesSeq = async (promiseFactories: PromiseFactor
 }
 
 // Execute long running bun shell commands for Clack
-
 interface ExecShellOptions {
   cwd?: string
   enableLogging?: boolean
@@ -121,7 +120,7 @@ export const execShell = async (command: string, options?: ExecShellOptions): Pr
       response: 'success',
     }
   } catch (err: any) {
-    if (!err || !err?.stderr) {
+    if (!err) {
       return {
         error: {
           code: 1,
@@ -228,18 +227,27 @@ interface TrackingArgs {
 }
 
 export const track = async (payload: TrackingArgs) => {
+  // if (process.env.BUN_ENV === 'development') return
+
   // Track user actions
   const cliTrackingServerUrl =
     process.env.BUN_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
-  const trackingRes = await ky
-    .post(cliTrackingServerUrl, {
-      json: {
-        generated_user_id: await retrieveGeneratedUserId(),
-        ...payload,
-      },
-      retry: 5,
-    })
-    .json()
 
-  return trackingRes
+  try {
+    const trackingRes = await ky
+      .post(cliTrackingServerUrl, {
+        json: {
+          generated_user_id: await retrieveGeneratedUserId(),
+          ...payload,
+        },
+        retry: 5,
+      })
+      .json()
+
+    return trackingRes
+  } catch (err: any) {
+    // console.log('Something went wrong while tracking cli usage', err)
+    // Silently return in case of tracking failure - we don't want it affecting cli functionality
+    return
+  }
 }

@@ -76,16 +76,3 @@ export const initTool = async (projectName: string, toolId: string): Promise<Too
     response: `${name} successfully initialized!`,
   }
 }
-
-export const extractOptions = (argv: string[]): string => {
-  const wildcardOptions = argv.filter((arg) => arg.startsWith('--'))
-  const wildcardOptionsShort = R.compose(
-    R.without(wildcardOptions),
-    R.filter((arg: string) => arg.startsWith('-'))
-  )(argv)
-  console.log('wildcardOptions', wildcardOptions)
-  console.log('wildcardOptionsShort', wildcardOptionsShort)
-  const optionsStr = wildcardOptionsShort.join(' ') + ' ' + wildcardOptions.join(' ')
-  console.log('optionsStr', optionsStr)
-  return optionsStr
-}

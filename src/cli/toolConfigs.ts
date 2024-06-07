@@ -173,7 +173,7 @@ export const getDbtConfig = (projectName: string): DbtConfig => {
     id: 'dbt',
     name: 'DBT',
     desc: 'An open source data transformation tool.',
-    version: '0.21.0',
+    version: DBT_CORE_VERSION,
     install: async () => {
       return await execShell(`poetry add dbt-core@${DBT_CORE_VERSION} dbt-trino@${DBT_TRINO_VERSION}`, {
         cwd: `${cwd}/${projectName}`,

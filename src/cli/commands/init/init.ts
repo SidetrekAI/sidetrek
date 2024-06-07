@@ -2,7 +2,7 @@ import * as p from '@clack/prompts'
 import * as R from 'ramda'
 import { setTimeout as sleep } from 'node:timers/promises'
 import chalk from 'chalk'
-import { colors } from '../../constants'
+import { SUPPORTED_PYTHON_VERSIONS, SUPPORTED_PYTHON_VERSIONS_STR, colors } from '../../constants'
 import { validateProjectName } from '../../validators'
 import { clackLog, endStopwatch, startStopwatch, track } from '../../utils'
 import { buildDagsterIcebergTrinoStack } from './stacks/dagsterIcebergTrinoStack'
@@ -27,9 +27,10 @@ export default async function init(options: any) {
       intro: () => p.intro(colors.sidetrekPurple(`🔥 Let's create a new data project!`)),
       prerequisites: async ({ results }) => {
         return await p.confirm({
-          message: `Sidetrek requires ${chalk.underline.yellow('Python 3.10-3.11')}, ${chalk.underline.yellow(
-            'Poetry'
-          )}, and git CLI installed. Are you ready to continue?`,
+          message:
+            'Sidetrek requires ' +
+            chalk.underline.yellow(`Python ${SUPPORTED_PYTHON_VERSIONS_STR}`) +
+            `, ${chalk.underline.yellow('Poetry')}, and git CLI installed. Are you ready to continue?`,
         })
       },
       pythonVersion: async ({ results }) => {
