@@ -12,6 +12,9 @@ export const colors = {
   lightGray: chalk.hex('#a1a1a1'),
 }
 
+export const SUPPORTED_PYTHON_VERSIONS = ['3.7', '3.8']
+export const SUPPORTED_PYTHON_VERSIONS_STR = '3.10-3.11'
+
 const unicode = isUnicodeSupported()
 const s = (c: string, fallback: string) => (unicode ? c : fallback)
 export const S_BAR = s('│', '|')
@@ -22,8 +25,8 @@ export const DAGSTER_VERSION = '^1.6.3'
 export const MELTANO_VERSION = '2.19.1'
 export const DBT_CORE_VERSION = '^1.7.13'
 export const DBT_TRINO_VERSION = '^1.7.1'
-export const DAGSTER_MELTANO_VERSION = '^1.5.3'
-export const DAGSTER_DBT_VERSION = '^0.22.3'
+export const DAGSTER_MELTANO_VERSION = '^1.5.4'
+export const DAGSTER_DBT_VERSION = '^0.23.4'
 
 export const SHARED_NETWORK_NAME = 'shared_network'
 export const MINIO_SERVER_HOST_PORT = '9000'
@@ -42,13 +45,14 @@ export const TRINO_VERSION = '437'
 export const TRINO_HOST_PORT = '8080'
 export const TRINO_CONTAINER_PORT = '8080'
 export const SUPERSET_HOST_PORT = '8088'
-export const SUPERSET_CONTAINER_PORT = '8088'
-export const SUPERSET_HOME_VOLUME_NAME = 'superset_home'
-export const SUPERSET_HOME_VOLUME = { [SUPERSET_HOME_VOLUME_NAME]: { external: false } }
-export const SUPERSET_DB_HOME_VOLUME_NAME = 'superset_db_home'
-export const SUPERSET_DB_HOME_VOLUME = { [SUPERSET_DB_HOME_VOLUME_NAME]: { external: false } }
-export const SUPERSET_CACHE_VOLUME_NAME = 'superset_cache'
-export const SUPERSET_CACHE_VOLUME = { [SUPERSET_CACHE_VOLUME_NAME]: { external: false } }
+
+export const S3_ENDPOINT = `http://minio:${MINIO_SERVER_HOST_PORT}`
+export const AWS_REGION = 'us-west-2'
+export const AWS_ACCESS_KEY_ID = 'admin'
+export const AWS_SECRET_ACCESS_KEY = 'admin_secret'
+export const LAKEHOUSE_NAME = 'lakehouse'
+export const ICEBERG_CATALOG_NAME = 'icebergcatalog'
+export const RAW_ICEBERG_TABLE_NAME = 'raw'
 
 export const AWS_REGION_ENVNAME = 'AWS_REGION'
 export const AWS_ACCESS_KEY_ID_ENVNAME = 'AWS_ACCESS_KEY_ID'
@@ -70,5 +74,3 @@ export const PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ACCESS_KEY_ID_ENVNAME =
   'PYICEBERG_CATALOG__ICEBERGCATALOG__S3__ACCESS_KEY_ID'
 export const PYICEBERG_CATALOG__ICEBERGCATALOG__S3__SECRET_ACCESS_KEY_ENVNAME =
   'PYICEBERG_CATALOG__ICEBERGCATALOG__S3__SECRET_ACCESS_KEY'
-
-export const RAW_ICEBERG_TABLE_NAME = 'raw'

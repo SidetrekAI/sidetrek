@@ -1,38 +1,66 @@
 import * as R from 'ramda'
+import { $ } from 'bun'
 import { Command } from 'commander'
 import { colors } from './constants'
-import init from './commands/init'
-import dev from './commands/dev'
+import { getPackageVersion, track } from './utils'
+import init from './commands/init/init'
+import start from './commands/start'
+import stop from './commands/stop'
+import down from './commands/down'
 import logs from './commands/logs'
+import runMeltano from './commands/run/meltano'
+import { runTrinoShell } from './commands/run/trino'
+import runDbt from './commands/run/dbt'
 
 const program = new Command()
 
 // NOTE: In commander js, [] means optional, <> means required
 
 export default async function runCli() {
+  const version = await getPackageVersion()
+
   program
-    .version('0.1.0')
+    .option('--version', 'Show version') // set up a manual --version to avoid subcommand --version being overwritten
     .description(
       `🦄 ${colors.sidetrekPink('Sidetrek')} is the ${colors.sidetrekYellow(
         'fastest'
       )} way to build a ${colors.sidetrekPurple('modern data stack')}.`
     )
+    .action((options) => {
+      if (options.version) {
+        console.log(version)
+      }
+    })
 
   const initCommand = program
     .command('init')
     .description('Initialize your project')
     .option('--skip-example', 'Skip the example code')
-    .action((_, options) => {
+    .action((options) => {
       init(options)
     })
 
-  const devCommand = program
-    .command('dev')
-    .description('Start the development server')
+  const startCommand = program
+    .command('start')
+    .description('Start the development services')
     .option('--build', 'Re-build the docker containers')
     .option('--skip <value...>', 'Skip a specific service')
-    .action((_, options) => {
-      dev(options)
+    .action((options) => {
+      start(options)
+    })
+
+  const stopCommand = program
+    .command('stop')
+    .description('Stop the development services')
+    .action(() => {
+      stop()
+    })
+
+  const downCommand = program
+    .command('down')
+    .description('Tear down the development services')
+    .action(() => {
+      down()
     })
 
   const logsCommand = program
@@ -41,9 +69,59 @@ export default async function runCli() {
     .argument('[string]', 'Service to view logs for')
     .option('-f, --follow', 'Follow logs')
     .option('--since <value>', 'Only show logs since a specific time ago')
+    .option('-n, --tail', 'Follow logs')
     .action((service, options) => {
       logs(service, options)
     })
+
+  const runCommand = program.command('run').description('Run tool commands')
+
+  const runMeltanoCommand = runCommand
+    .command('meltano')
+    .description('Run Meltano commands')
+    .helpOption(false)
+    .argument('[string...]', 'Meltano command to run')
+    .allowUnknownOption()
+    .action(async (meltanoCmd) => {
+      // Must handle --version manually for subcommands (Commanderjs bug)
+      if (process.argv[4] === '--version') {
+        await $`poetry run meltano --version`
+      } else {
+        runMeltano(meltanoCmd)
+      }
+    })
+
+  const runDbtCommand = runCommand
+    .command('dbt')
+    .description('Run DBT commands')
+    .helpOption(false)
+    .argument('[string...]', 'DBT command to run')
+    .allowUnknownOption()
+    .action(async (dbtCmd) => {
+      // Must handle --version manually for subcommands (Commanderjs bug)
+      if (process.argv[4] === '--version') {
+        await $`poetry run dbt --version`
+      } else {
+        runDbt(dbtCmd)
+      }
+    })
+
+  const runTrinoCommand = runCommand.command('trino').description('Run Trino commands')
+
+  const runTrinoShellCommand = runTrinoCommand
+    .command('shell')
+    .description('Enter Trino shell')
+    .action(() => {
+      runTrinoShell()
+    })
+
+  // Track every command
+  program.hook('postAction', async (thisCommand, actionCommand) => {
+    track({
+      command: actionCommand.name(),
+      metadata: { args: actionCommand.args, options: actionCommand.opts() },
+    })
+  })
 
   program.parse(process.argv)
 }

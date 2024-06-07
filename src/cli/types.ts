@@ -18,3 +18,18 @@ export type PromiseFactory = () => Promise<any>
 export interface EnvFileObj {
   [key: string]: string
 }
+
+export interface SidetrekConfig {
+  services: SidetrekConfigServices
+}
+
+export interface SidetrekConfigServices {
+  [key: string]: SidetrekConfigService
+}
+
+export interface SidetrekConfigService {
+  title: string
+  description?: string
+  port?: string
+  logs?: boolean
+}
