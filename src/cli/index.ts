@@ -74,9 +74,7 @@ export default async function runCli() {
       logs(service, options)
     })
 
-  const runCommand = program
-    .command('run')
-    .description('Run tool commands')
+  const runCommand = program.command('run').description('Run tool commands')
 
   const runMeltanoCommand = runCommand
     .command('meltano')
@@ -119,10 +117,16 @@ export default async function runCli() {
 
   // Track every command
   program.hook('postAction', async (thisCommand, actionCommand) => {
-    const args = R.isEmpty(thisCommand.args) ? '' : thisCommand.args.join(' ')
+    // Do not track top level commands (e.g. `sidetrek --version`); this can be run from any dir, which will create different generated user id
+    if (R.isEmpty(thisCommand.args)) return
+
+    // SPECIAL CASE: `sidetrek init` does not have a generated user id yet, so handle the tracking inside the command 
+    if (thisCommand.args[0] === 'init') return
+
+    const argsStr = thisCommand.args.join(' ')
 
     track({
-      command: `${thisCommand.name()} ${args}`,
+      command: `${thisCommand.name()} ${argsStr}`,
       metadata: { options: thisCommand.opts() },
     })
   })
