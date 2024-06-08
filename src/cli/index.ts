@@ -74,7 +74,9 @@ export default async function runCli() {
       logs(service, options)
     })
 
-  const runCommand = program.command('run').description('Run tool commands')
+  const runCommand = program
+    .command('run')
+    .description('Run tool commands')
 
   const runMeltanoCommand = runCommand
     .command('meltano')
@@ -117,9 +119,11 @@ export default async function runCli() {
 
   // Track every command
   program.hook('postAction', async (thisCommand, actionCommand) => {
+    const args = R.isEmpty(thisCommand.args) ? '' : thisCommand.args.join(' ')
+
     track({
-      command: actionCommand.name(),
-      metadata: { args: actionCommand.args, options: actionCommand.opts() },
+      command: `${thisCommand.name()} ${args}`,
+      metadata: { options: thisCommand.opts() },
     })
   })
 
