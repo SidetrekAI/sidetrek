@@ -47,6 +47,8 @@ import {
   ICEBERG_PG_HOST_PORT,
   SUPPORTED_PYTHON_VERSIONS,
   SUPPORTED_PYTHON_VERSIONS_STR,
+  USERINFO_FILEPATH,
+  SIDETREK_CONFIG_FILENAME,
 } from '@cli/constants'
 import gitignore from '@cli/templates/gitignore'
 import { initTool } from '../../utils'
@@ -185,12 +187,13 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
       },
     },
   }
-  await Bun.write(`./${projectName}/sidetrek.config.yaml`, YAML.stringify(sidetrekConfigYaml))
+  await Bun.write(`./${projectName}/${SIDETREK_CONFIG_FILENAME}`, YAML.stringify(sidetrekConfigYaml))
 
+  // Assign a generatedUserId to the user for tracking purposes
   const userinfo = {
     generatedUserId: uuidv4(),
   }
-  await Bun.write(`./${projectName}/.sidetrek/userinfo.json`, JSON.stringify(userinfo))
+  await Bun.write(`./${projectName}/${USERINFO_FILEPATH}`, JSON.stringify(userinfo))
 
   if (poetryNewResp?.error) {
     const errorMessage = `Sorry, something went wrong while scaffolding the project via Poetry.\n\n${poetryNewResp.error?.stderr}`
