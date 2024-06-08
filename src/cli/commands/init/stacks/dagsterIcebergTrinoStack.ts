@@ -195,6 +195,10 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   }
   await Bun.write(`./${projectName}/${USERINFO_FILEPATH}`, JSON.stringify(userinfo))
 
+  // Track the init command as soon as generated user id is created
+  // NOTE: `sidetrek init` command cannot be tracked in the postAction hook since there's no generated user id yet
+  await track({ command: 'init', metadata: { started: true, cliInputs } })
+
   if (poetryNewResp?.error) {
     const errorMessage = `Sorry, something went wrong while scaffolding the project via Poetry.\n\n${poetryNewResp.error?.stderr}`
     await exitOnError(errorMessage)
@@ -627,5 +631,5 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    * Track success
    *
    */
-  track({ command: 'init', metadata: { success: true, cliInputs, duration: totalDuration } })
+  await track({ command: 'init', metadata: { success: true, cliInputs, duration: totalDuration } })
 }
