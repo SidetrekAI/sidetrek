@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid'
 import fs from 'node:fs'
 import chalk from 'chalk'
 import type { EnvFileObj, PromiseFactory, ShellResponse } from './types'
-import { colors, S_BAR } from './constants'
+import { colors, S_BAR, USERINFO_FILEPATH } from './constants'
 
 const cwd = process.cwd()
 
@@ -199,22 +199,22 @@ export const createOrUpdateEnvFile = async (envFilePath: string, envFileObj: Env
 
 export const retrieveGeneratedUserId = async () => {
   // Check if the uuid exists in .sidetrek
-  const userinfoExists = await Bun.file(`${cwd}/.sidetrek/userinfo.json`).exists()
+  const userinfoExists = await Bun.file(`${cwd}/${USERINFO_FILEPATH}`).exists()
 
   // If not, create it and store it
   if (!userinfoExists) {
     const generatedUserId = uuidv4()
-    await Bun.write(`${cwd}/.sidetrek/userinfo.json`, JSON.stringify({ generatedUserId }))
+    await Bun.write(`${cwd}/${USERINFO_FILEPATH}`, JSON.stringify({ generatedUserId }))
     return generatedUserId
   }
 
   // If it exists, but doesn't have uuid in it
-  const userinfo = await Bun.file(`${cwd}/.sidetrek/userinfo.json`).json()
+  const userinfo = await Bun.file(`${cwd}/${USERINFO_FILEPATH}`).json()
 
   if (!userinfo?.generatedUserId) {
     const generatedUserId = uuidv4()
     const updatedUserinfo = { ...userinfo, generatedUserId }
-    await Bun.write(`${cwd}/.sidetrek/userinfo.json`, JSON.stringify(updatedUserinfo))
+    await Bun.write(`${cwd}/${USERINFO_FILEPATH}`, JSON.stringify(updatedUserinfo))
     return generatedUserId
   }
 
@@ -227,12 +227,10 @@ interface TrackingArgs {
 }
 
 export const track = async (payload: TrackingArgs) => {
-  // if (process.env.CUSTOM_ENV === 'development') return
-
   // Track user actions
   const cliTrackingServerUrl =
-    process.env.CUSTOM_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
-
+  process.env.CUSTOM_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
+  
   try {
     const trackingRes = await ky
       .post(cliTrackingServerUrl, {
@@ -246,6 +244,11 @@ export const track = async (payload: TrackingArgs) => {
 
     return trackingRes
   } catch (err: any) {
+    if (process.env.CUSTOM_ENV === 'development') {
+      console.log('tracking payload', payload)
+      console.error('tracking err', err)
+    }
+
     // Silently return in case of tracking failure - we don't want it affecting cli functionality
     return
   }
