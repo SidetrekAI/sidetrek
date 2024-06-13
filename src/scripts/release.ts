@@ -24,10 +24,10 @@ const availableArchs = ['linux-x64', 'linux-arm64', 'windows-x64', 'darwin-x64',
 type Arch = (typeof availableArchs)[number]
 const archOption = options.arch as Arch | undefined
 
-const productionOption = options.production as boolean
+// const productionOption = options.production as boolean
 const tempBuildDirPath = './temp/sidetrek'
 
-console.log('Is production release:', productionOption)
+// console.log('Is production release:', productionOption)
 
 const handleError = (err: any) => {
   console.log(`Failed with code ${err.exitCode}`)
@@ -78,13 +78,10 @@ const build = async (version: string, arch: Arch) => {
     handleError(err)
   }
 }
-
-const runGithubRelease = async (version: string) => {}
-
 const tar = async (version: string, arch: Arch) => {
   try {
     // Tar the executable
-    await $`tar -czvf ./release/sidetrek.${version}-${arch}.tar.gz -C ${tempBuildDirPath}/${version}-${arch}/sidetrek .`
+    await $`tar -czvf ./release/sidetrek.${version}-${arch}.tar.gz ${tempBuildDirPath}/${version}-${arch}/sidetrek`
     console.log('Tar created successfully.')
   } catch (err) {
     console.error('Error creating tar')
@@ -101,15 +98,11 @@ async function main() {
   await createDirs()
   await incrementVersion()
 
-  const version = 'v' + await getPackageVersion()
+  const version = 'v' + (await getPackageVersion())
 
   const archsToRelease = archOption ? [archOption] : availableArchs
   const promises = archsToRelease.map((_arch) => buildAndTar(version, _arch))
   await Promise.all(promises)
-
-  if (productionOption) {
-    await runGithubRelease(version)
-  }
 
   // Clean up
   await $`rm -rf ${tempBuildDirPath}`

@@ -1,0 +1,20 @@
+name: Create Github Release
+on: 
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+jobs:
+  if_merged:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pipe-cd/actions-gh-release@v2.3.4
+        with:
+          release_file: '**/RELEASE'
+          token: ${{ secrets.GITHUB_TOKEN }}
