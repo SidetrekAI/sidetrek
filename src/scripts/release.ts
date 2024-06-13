@@ -89,11 +89,6 @@ const tar = async (version: string, arch: Arch) => {
   }
 }
 
-const buildAndTar = async (version: string, arch: Arch) => {
-  await build(version, arch)
-  await tar(version, arch)
-}
-
 async function main() {
   await createDirs()
   await incrementVersion()
@@ -101,8 +96,14 @@ async function main() {
   const version = 'v' + (await getPackageVersion())
 
   const archsToRelease = archOption ? [archOption] : availableArchs
-  const promises = archsToRelease.map((_arch) => buildAndTar(version, _arch))
-  await Promise.all(promises)
+
+  // Build
+  const buildPromises = archsToRelease.map((_arch) => build(version, _arch))
+  await Promise.all(buildPromises)
+
+  // Tar
+  const tarPromises = archsToRelease.map((_arch) => tar(version, _arch))
+  await Promise.all(tarPromises)
 
   // Clean up
   await $`rm -rf ${tempBuildDirPath}`
