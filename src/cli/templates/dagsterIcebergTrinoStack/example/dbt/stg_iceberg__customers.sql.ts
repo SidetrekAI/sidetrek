@@ -12,8 +12,13 @@ const sql = `{{
     }
   )
 }}
- 
+
 with source as (
+  select *, row_number() over (partition by id order by id desc) as row_num
+  from {{ source('stg_iceberg', 'customers') }}
+),
+
+deduped_and_renamed as (
   select
     CAST(id AS VARCHAR) AS id,
     CAST(created_at AS TIMESTAMP) AS acc_created_at,
@@ -29,9 +34,10 @@ with source as (
     CAST(referrer AS VARCHAR) AS referrer,
     CAST(customer_age AS DECIMAL) AS customer_age,
     CAST(device_type AS VARCHAR) AS device_type
-  from {{ source('stg_iceberg', 'customers') }}
+  from source
+  where row_num = 1
 )
  
-select * from source`
+select * from deduped_and_renamed`
 
 export default sql

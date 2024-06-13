@@ -12,17 +12,23 @@ const sql = `{{
     }
   )
 }}
- 
+
 with source as (
+  select *, row_number() over (partition by id order by id desc) as row_num
+  from {{ source('stg_iceberg', 'stores') }}
+),
+
+deduped_and_renamed as (
   select
     CAST(id AS VARCHAR) AS id,
     CAST(name AS VARCHAR) AS name,
     CAST(city AS VARCHAR) AS city,
     CAST(state AS VARCHAR) AS state,
     CAST(tax_rate AS DECIMAL(10, 8)) AS tax_rate
-  from {{ source('stg_iceberg', 'stores') }}
+  from source
+  where row_num = 1
 )
  
-select * from source`
+select * from deduped_and_renamed`
 
 export default sql

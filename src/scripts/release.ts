@@ -83,12 +83,8 @@ const runGithubRelease = async (version: string) => {}
 
 const tar = async (version: string, arch: Arch) => {
   try {
-    // Copy the release script
-    await $`cp ./src/scripts/install.sh ${tempBuildDirPath}/${version}-${arch}/install.sh`
-    console.log('Copied release script.')
-
-    // Tar
-    await $`tar -czvf ./release/sidetrek.${version}-${arch}.tar.gz -C ${tempBuildDirPath}/${version}-${arch} .`
+    // Tar the executable
+    await $`tar -czvf ./release/sidetrek.${version}-${arch}.tar.gz -C ${tempBuildDirPath}/${version}-${arch}/sidetrek .`
     console.log('Tar created successfully.')
   } catch (err) {
     console.error('Error creating tar')
@@ -105,7 +101,7 @@ async function main() {
   await createDirs()
   await incrementVersion()
 
-  const version = await getPackageVersion()
+  const version = 'v' + await getPackageVersion()
 
   const archsToRelease = archOption ? [archOption] : availableArchs
   const promises = archsToRelease.map((_arch) => buildAndTar(version, _arch))
