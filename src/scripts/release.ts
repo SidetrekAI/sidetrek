@@ -81,7 +81,7 @@ const build = async (version: string, arch: Arch) => {
 const tar = async (version: string, arch: Arch) => {
   try {
     // Tar the executable
-    await $`tar -czvf ./release/sidetrek.${version}-${arch}.tar.gz sidetrek`.cwd(`${tempBuildDirPath}/${version}-${arch}`)
+    await $`tar -czvf ${cwd}/release/sidetrek.${version}-${arch}.tar.gz sidetrek`.cwd(`${tempBuildDirPath}/${version}-${arch}`)
     console.log('Tar created successfully.')
   } catch (err) {
     console.error('Error creating tar')
