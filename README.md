@@ -9,6 +9,9 @@
 <a href="https://join.slack.com/t/sidetrek-community/shared_invite/zt-2jt7qd46b-FmqAl3WSU~2uWtAFTXjj7A"><img src="https://img.shields.io/badge/slack-white?logo=slack&logoColor=red" /></a>
 <a href="https://www.linkedin.com/company/35626712"><img src="https://img.shields.io/badge/linkedin-white?logo=linkedin&logoColor=blue" /></a>
 </div>
+=======
+<center><img src="https://raw.githubusercontent.com/sidetrekAI/sidetrek-cli/master/.github/logo-tagline-light-svg.svg" width="100%"/></center>
+
 
 ### What is Sidetrek?
 
