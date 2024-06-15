@@ -1,13 +1,13 @@
-<div class="flex justify-center">
-<img src="https://raw.githubusercontent.com/sidetrekAI/sidetrek-cli/master/.github/logo-tagline-light-svg.svg" width="50%"/>
+<div style="text-align:center">
+<img src="https://raw.githubusercontent.com/sidetrekAI/sidetrek-cli/master/.github/logo-tagline-light-svg.svg" />
 </div>
 
-<div class="flex justify-center">
-<img src="https://img.shields.io/github/license/SidetrekAI/sidetrek-cli?color=%23866eea"/>
-<img src="https://img.shields.io/github/last-commit/SidetrekAI/sidetrek-cli?color=%23ff4d84&logo=github&logoColor=white"/>
-<img src="https://img.shields.io/badge/python-v3.10%20%7C%20v3.11-black?logo=python&logoColor=yellow"/>
-<a href="https://join.slack.com/t/sidetrek-community/shared_invite/zt-2jt7qd46b-FmqAl3WSU~2uWtAFTXjj7A"><img src="https://img.shields.io/badge/slack-white?logo=slack&logoColor=red"/></a>
-<a href="https://www.linkedin.com/company/35626712"><img src="https://img.shields.io/badge/linkedin-white?logo=linkedin&logoColor=blue"/></a>
+<div style="text-align:center">
+<img src="https://img.shields.io/github/license/SidetrekAI/sidetrek-cli?color=%23866eea" />
+<img src="https://img.shields.io/github/last-commit/SidetrekAI/sidetrek-cli?color=%23ff4d84&logo=github&logoColor=white" />
+<img src="https://img.shields.io/badge/python-v3.10%20%7C%20v3.11-black?logo=python&logoColor=yellow" />
+<a href="https://join.slack.com/t/sidetrek-community/shared_invite/zt-2jt7qd46b-FmqAl3WSU~2uWtAFTXjj7A"><img src="https://img.shields.io/badge/slack-white?logo=slack&logoColor=red" /></a>
+<a href="https://www.linkedin.com/company/35626712"><img src="https://img.shields.io/badge/linkedin-white?logo=linkedin&logoColor=blue" /></a>
 </div>
 
 ### What is Sidetrek?
