@@ -25,7 +25,7 @@ type Arch = (typeof availableArchs)[number]
 const archOption = options.arch as Arch | undefined
 
 // const productionOption = options.production as boolean
-const tempBuildDirPath = './temp/sidetrek'
+const tempBuildDirPath = `${cwd}/temp/sidetrek`
 
 // console.log('Is production release:', productionOption)
 
@@ -81,7 +81,7 @@ const build = async (version: string, arch: Arch) => {
 const tar = async (version: string, arch: Arch) => {
   try {
     // Tar the executable
-    await $`tar -czvf ./release/sidetrek.${version}-${arch}.tar.gz ${tempBuildDirPath}/${version}-${arch}/sidetrek`
+    await $`tar -czvf ${cwd}/release/sidetrek.${version}-${arch}.tar.gz sidetrek`.cwd(`${tempBuildDirPath}/${version}-${arch}`)
     console.log('Tar created successfully.')
   } catch (err) {
     console.error('Error creating tar')

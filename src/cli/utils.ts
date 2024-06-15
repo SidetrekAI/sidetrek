@@ -229,14 +229,35 @@ interface TrackingArgs {
 export const track = async (payload: TrackingArgs) => {
   // Track user actions
   const cliTrackingServerUrl =
-  process.env.CUSTOM_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
-  
+    process.env.CUSTOM_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
+
+  // Track os and arch
+  let os = undefined
+  let arch = undefined
+
+  try {
+    os = (await $`uname -s`.text()).replace('\n', '').toLowerCase()
+    arch = (await $`uname -m`.text()).replace('\n', '').toLowerCase()
+  } catch (err: any) {
+    if (process.env.CUSTOM_ENV === 'development') {
+      console.error('tracking os/arch err', err)
+    }
+
+    // Silently return in case of tracking failure - we don't want it affecting cli functionality
+    return
+  }
+
   try {
     const trackingRes = await ky
       .post(cliTrackingServerUrl, {
         json: {
           generated_user_id: await retrieveGeneratedUserId(),
           ...payload,
+          metadata: {
+            ...payload.metadata,
+            os,
+            arch,
+          },
         },
         retry: 5,
       })
