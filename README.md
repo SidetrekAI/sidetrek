@@ -34,6 +34,8 @@ Make sure you have the following installed on your machine:
 
 ## Quick Start
 
+If you're new to Sidetrek, the best place to start is our [Get Started](https://docs.sidetrek.com/get-started/overview) guide.
+
 ### Download and Install
 
 Download the latest release for your OS. After you install it, verify installation by checking the version
