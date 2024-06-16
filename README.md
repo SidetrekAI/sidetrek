@@ -38,7 +38,13 @@ If you're new to Sidetrek, the best place to start is our [Get Started](https://
 
 ### Download and Install
 
-Download the latest release for your OS. After you install it, verify installation by checking the version:
+Download the latest release of Sidetrek CLI.
+
+```bash
+curl -fsSL https://sidetrek.com/cli.sh | sh
+```
+
+Once you install it, verify the installation by checking the version:
 
 ```bash
 sidetrek --version
@@ -46,7 +52,7 @@ sidetrek --version
 
 ### Initialize A Project
 
-Initialize a new project by simply running this command:
+Initialize a new project by running this command:
 
 ```bash
 sidetrek init
