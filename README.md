@@ -83,11 +83,11 @@ Your data project will include the following open-source tools:
 
 ## Connect with Us
 
-- 🌟 [Star us on GitHub](https://github.com/SidetrekAI/sidetrek-cli)
+- 🌟 [Star us on GitHub](https://github.com/SidetrekAI/sidetrek)
 - 📚 [Read our documentation](https://docs.sidetrek.com/)
 - 🔭 [Follow us on LinkedIn](https://www.linkedin.com/company/35626712)
 - 👋 [Join us on Slack](https://join.slack.com/t/sidetrek-community/shared_invite/zt-2jt7qd46b-FmqAl3WSU~2uWtAFTXjj7A)
-- ✏️ [Start a GitHub Discussion](https://github.com/SidetrekAI/sidetrek-cli/discussions)
+- ✏️ [Start a GitHub Discussion](https://github.com/SidetrekAI/sidetrek/discussions)
 - ✉️ [Contact us on our website](https://sidetrek-website.vercel.app/contact)
 
 ## How to Report An Issue
@@ -96,8 +96,8 @@ Contributions are welcome!
 
 We're also building a team here at Sidetrek and are always on the lookout for great contributors to join us.
 
-To report an issue, please open a new issue in [Issues](https://github.com/SidetrekAI/sidetrek-cli/issues).
+To report an issue, please open a new issue in [Issues](https://github.com/SidetrekAI/sidetrek/issues).
 
 ## License
 
-Sidetrek CLI is [Apache 2.0](https://github.com/SidetrekAI/sidetrek-cli/blob/main/LICENSE) licensed.
+Sidetrek CLI is [Apache 2.0](https://github.com/SidetrekAI/sidetrek/blob/main/LICENSE) licensed.
