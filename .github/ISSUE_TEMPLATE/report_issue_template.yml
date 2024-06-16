@@ -9,8 +9,8 @@ body:
         <p align="center">
           <a target="_blank" href="https://sidetrek.com/">
             <picture>
-              <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/sidetrekAI/sidetrek-cli/master/.github/logo-tagline-dark-svg.svg">
-              <img alt="dagster logo" src="https://raw.githubusercontent.com/sidetrekAI/sidetrek-cli/master/.github/logo-tagline-light-svg.svg" width="auto" height="80">
+              <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/sidetrekAI/sidetrek/master/.github/logo-tagline-dark-svg.svg">
+              <img alt="dagster logo" src="https://raw.githubusercontent.com/sidetrekAI/sidetrek/master/.github/logo-tagline-light-svg.svg" width="auto" height="80">
             </picture>
           </a>
         </p>
