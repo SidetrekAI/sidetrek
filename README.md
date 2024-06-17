@@ -12,7 +12,7 @@
 
 Sidetrek is the fastest way to build a modern data stack. It's an open-source CLI that helps you create a data project from scratch.
 
-Sidetrek is built on top of popular open-source tools like Dagster, Meltano, DBT, Minio, Apache Iceberg, Trino, and Superset. We're continuously adding new tools - if you'd like to see a specific tool added, please let us know by opening an issue on our GitHub repository.
+Sidetrek is built on top of popular open-source tools like Dagster, Meltano, DBT, Minio, Apache Iceberg, Trino, and Superset. We're continuously adding new tools and use cases - if you'd like to see a specific tool added, please let us know by opening an issue on our GitHub repository.
 
 Our roadmap includes not just data engineering tools, but also machine learning and data science tools for ML and AI use cases.
 
@@ -79,13 +79,15 @@ Once you are in the project folder, run the following command:
 sidetrek start
 ```
 
-If you're runnign it for the first time, it will take a while to pull all the images, so please be patient!
+If you're running it for the first time, it will take a while to pull all the images, so please be patient!
 
-Once it's up and running, you can see Dagster UI here: http://localhost:3000.
+Once it's up and running, you can see the Dagster UI here: http://localhost:3000.
 
 ### Explore the Example Project
 
-If you opted in to include an example project (recommended), you have a fully functional example data pipeline set up now. You still have to actually run some job though to be able to see your data in Superset (http://localhost:8088).
+If you opted in to include an example project (recommended), you have a fully functional example data pipeline set up now. 
+
+You still have to a few things though if you want to see the example data visualized in Superset (http://localhost:8088).
 
 1. Run the Meltano ingestion job in Dagster to load the example data into Iceberg tables.
 2. Run the DBT transformations in Dagster.
