@@ -10,7 +10,7 @@
 
 ### What is Sidetrek?
 
-Sidetrek is the fastest way to build a modern data stack. It's an open-source CLI that helps you create a data project from scratch.
+Sidetrek is the fastest way to build an OSS modern data stack. It's an open-source CLI that helps you create a data project from scratch.
 
 With Sidetrek, you can set up an end-to-end data pipeline locally in minutes.
 
