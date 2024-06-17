@@ -58,7 +58,14 @@ Initialize a new project by running this command:
 sidetrek init
 ```
 
-It will ask you to select the Python version, enter the project name, and select the data stack. Currently, we only have one data stack available.
+It will ask you to select the Python version, enter the project name, and select the data stack. Currently, we only have one data stack available made up of the following open-source tools:
+
+- **Dagster** for orchestration
+- **Meltano** for data ingestion
+- **DBT** for data transformation
+- **Minio** and Apache Iceberg for data storage
+- **Trino** for querying your data
+- **Superset** for data visualization
 
 After pressing Enter, Sidetrek will start scaffolding your project and when it's done, you'll see the message `You're all set - enjoy building your new data project! 🚀`
 
@@ -72,7 +79,22 @@ Once you are in the project folder, run the following command:
 sidetrek start
 ```
 
-It will take a while to pull all the images when you run it for the first time, so please be patient!
+If you're runnign it for the first time, it will take a while to pull all the images, so please be patient!
+
+Once it's up and running, you can see Dagster UI here: http://localhost:3000.
+
+### Explore the Example Project
+
+If you opted in to include an example project (recommended), you have a fully functional example data pipeline set up now. You still have to actually run some job though to be able to see your data in Superset (http://localhost:8088).
+
+1. Run the Meltano ingestion job in Dagster to load the example data into Iceberg tables.
+2. Run the DBT transformations in Dagster.
+3. Add Trino as a database connection in Superset.
+4. Add an example dashboard in Superset.
+
+Once you've completed the above steps, you should be able to see the Superset dashboard with charts!
+
+For more information, please check out the [example project guide](https://docs.sidetrek.com/get-started/step-4-explore-example).
 
 ## Data Stack
 
