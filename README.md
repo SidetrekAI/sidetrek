@@ -32,6 +32,10 @@ Make sure you have the following installed on your machine:
 - Poetry
 - git CLI
 
+### Supported Platforms
+
+Currently we support MacOs and Linux, but NOT Windows.
+
 ## Quick Start
 
 If you're new to Sidetrek, the best place to start is our [Get Started](https://docs.sidetrek.com/get-started/overview) guide.
@@ -48,6 +52,14 @@ Once you install it, verify the installation by checking the version:
 
 ```bash
 sidetrek --version
+```
+
+### Updating Sidetrek
+
+To update Sidetrek to the latest version, you simply need to run the install command again:
+
+```bash
+curl -fsSL https://sidetrek.com/cli.sh | sh
 ```
 
 ### Initialize A Project
@@ -69,7 +81,7 @@ It will ask you to select the Python version, enter the project name, and select
 
 After pressing Enter, Sidetrek will start scaffolding your project and when it's done, you'll see the message `You're all set - enjoy building your new data project! 🚀`
 
-### Start The Project
+### Start the Project
 
 Change working directory to your project directory by running `cd <your_project>`
 
@@ -87,7 +99,7 @@ Once it's up and running, you can see the Dagster UI here: http://localhost:3000
 
 If you opted in to include an example project (recommended), you have a fully functional example data pipeline set up now. 
 
-You still have to a few things though if you want to see the example data visualized in Superset (http://localhost:8088).
+You still have to do a few things though if you want to see the example data visualized in Superset (http://localhost:8088).
 
 1. Run the Meltano ingestion job in Dagster to load the example data into Iceberg tables.
 2. Run the DBT transformations in Dagster.
@@ -96,7 +108,9 @@ You still have to a few things though if you want to see the example data visual
 
 Once you've completed the above steps, you should be able to see the Superset dashboard with charts!
 
-For more information, please check out the [example project guide](https://docs.sidetrek.com/get-started/step-4-explore-example).
+For more information, please check out the [Explore Example Guide](https://docs.sidetrek.com/get-started/step-4-explore-example).
+
+For a full guide from installation to example data visualization, check out our [Get Started](https://docs.sidetrek.com/get-started/overview) guide.
 
 ## Data Stack
 
@@ -109,6 +123,10 @@ Your data project will include the following open-source tools:
 - **Trino** for querying your data
 - **Superset** for data visualization
 
+We're working on adding more tools and use cases. If you have a suggestion, please feel free to reach out to us.
+
+We'd love to learn more about what your use case!
+
 ## Connect with Us
 
 - 🌟 [Star us on GitHub](https://github.com/SidetrekAI/sidetrek)
@@ -118,9 +136,25 @@ Your data project will include the following open-source tools:
 - ✏️ [Start a GitHub Discussion](https://github.com/SidetrekAI/sidetrek/discussions)
 - ✉️ [Contact us via email](https://sidetrek.com/contact)
 
+## Have questions? Talk to us!
+
+If you have any questions, feel free to reach out to us on [Slack](https://join.slack.com/t/sidetrek-community/shared_invite/zt-2jt7qd46b-FmqAl3WSU~2uWtAFTXjj7A), [Github](https://github.com/SidetrekAI/sidetrek) or [email](https://sidetrek.com/contact). We're here to help!
+
+We're continuously improving our documentation so if you have a use case that we don't cover, please let us know and we'll do our best to create a good tutorial for it.
+
+We'd love to learn more about your use case and help you get it working. So don't hesitate to reach out!
+
+## Project Maturity
+
+Sidetrek is new and we will likely have breaking changes in the future.
+
+If there are any breaking changes, we will make it clear in the release notes. 
+
+Right now Sidetrek is mostly a set up tool, so any future changes should not impact your existing project scaffolded by Sidetrek. But as we add more advanced features, this may change. If there are any such changes, we will let you know in the release notes.
+
 ## Contributions
 
-Contributions are welcome!
+Contributions are always welcome!
 
 We're also building a team here at Sidetrek and are always on the lookout for great contributors to join us.
 
@@ -128,10 +162,6 @@ We're also building a team here at Sidetrek and are always on the lookout for gr
 
 To report an issue, please open a new issue in [Issues](https://github.com/SidetrekAI/sidetrek/issues).
 
-## Have questions?
-
-If you have any questions, feel free to reach out to us on [Slack](https://join.slack.com/t/sidetrek-community/shared_invite/zt-2jt7qd46b-FmqAl3WSU~2uWtAFTXjj7A), [Github](https://github.com/SidetrekAI/sidetrek) or [email](https://sidetrek.com/contact).
-
 ## License
 
-Sidetrek CLI is [Apache 2.0](https://github.com/SidetrekAI/sidetrek/blob/main/LICENSE) licensed.
+Sidetrek is [Apache 2.0](https://github.com/SidetrekAI/sidetrek/blob/main/LICENSE) licensed.
