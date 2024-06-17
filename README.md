@@ -12,6 +12,8 @@
 
 Sidetrek is the fastest way to build a modern data stack. It's an open-source CLI that helps you create a data project from scratch.
 
+With Sidetrek, you can set up an end-to-end data pipeline locally in minutes.
+
 Sidetrek is built on top of popular open-source tools like Dagster, Meltano, DBT, Minio, Apache Iceberg, Trino, and Superset. We're continuously adding new tools and use cases - if you'd like to see a specific tool added, please let us know by opening an issue on our GitHub repository.
 
 Our roadmap includes not just data engineering tools, but also machine learning and data science tools for ML and AI use cases.
