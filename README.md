@@ -36,7 +36,7 @@ Make sure you have the following installed on your machine:
 
 ### Supported Platforms
 
-Currently we support MacOs and Linux, but NOT Windows.
+Currently we only support MacOs and Linux.
 
 ## Quick Start
 
@@ -64,7 +64,7 @@ To update Sidetrek to the latest version, you simply need to run the install com
 curl -fsSL https://sidetrek.com/cli.sh | sh
 ```
 
-### Initialize A Project
+### Initialize a Project
 
 Initialize a new project by running this command:
 
@@ -72,7 +72,7 @@ Initialize a new project by running this command:
 sidetrek init
 ```
 
-It will ask you to select the Python version, enter the project name, and select the data stack. Currently, we only have one data stack available made up of the following open-source tools:
+It will ask you to select the Python version, project name, and data stack. Currently, we only have one data stack available made up of the following open-source tools:
 
 - **Dagster** for orchestration
 - **Meltano** for data ingestion
@@ -81,11 +81,11 @@ It will ask you to select the Python version, enter the project name, and select
 - **Trino** for querying your data
 - **Superset** for data visualization
 
-After pressing Enter, Sidetrek will start scaffolding your project and when it's done, you'll see the message `You're all set - enjoy building your new data project! 🚀`
+After pressing Enter, Sidetrek will start scaffolding your project and in a couple of minutes, you should see the success message `You're all set - enjoy building your new data project! 🚀`.
 
 ### Start the Project
 
-Change working directory to your project directory by running `cd <your_project>`
+Change working directory to your project directory by running `cd <your_project>`.
 
 Once you are in the project folder, run the following command:
 
