@@ -14,7 +14,7 @@ Sidetrek is the fastest way to build an OSS modern data stack. It's an open-sour
 
 With Sidetrek, you can set up an end-to-end data pipeline locally in minutes.
 
-Sidetrek is built on top of popular open-source tools like Dagster, Meltano, DBT, Minio, Apache Iceberg, Trino, and Superset. We're continuously adding new tools and use cases - if you'd like to see a specific tool added, please let us know by opening an issue on our GitHub repository.
+Sidetrek is built on top of popular open-source tools like Dagster, Meltano, DBT, Minio, Apache Iceberg, Trino, and Superset. We're continuously adding new tools and use cases - if you'd like to see a specific tool added, please let us know by opening an issue in our GitHub repository.
 
 Our roadmap includes not just data engineering tools, but also machine learning and data science tools for ML and AI use cases.
 
@@ -24,7 +24,7 @@ Data engineering is complex! There are so many tools out there and the list just
 
 It's not only hard to keep up with the latest tools and best practices, but connecting these tools can be tricky. As a data engineer, you have so many responsibilities already. You shouldn't have to spend time figuring out how to set up and connect these tools together.
 
-Sidetrek simplifies the process of creating a data project by providing a curated list of tools that work well together.
+Sidetrek simplifies the process of creating a data project by providing a curated list of tools that work well together, as well as providing an awesome local development environment for fast iteration.
 
 ### Prerequisites
 
@@ -97,6 +97,8 @@ If you're running it for the first time, it will take a while to pull all the im
 
 Once it's up and running, you can see the Dagster UI here: http://localhost:3000.
 
+You'll also see a bunch of docker services running for the core services: Minio, Iceberg, Trino, and Superset.
+
 ### Explore the Example Project
 
 If you opted in to include an example project (recommended), you have a fully functional example data pipeline set up now. 
@@ -127,7 +129,7 @@ Your data project will include the following open-source tools:
 
 We're working on adding more tools and use cases. If you have a suggestion, please feel free to reach out to us.
 
-We'd love to learn more about what your use case!
+We'd love to learn more about your use case!
 
 ## Connect with Us
 
@@ -145,6 +147,16 @@ If you have any questions, feel free to reach out to us on [Slack](https://join.
 We're continuously improving our documentation so if you have a use case that we don't cover, please let us know and we'll do our best to create a good tutorial for it.
 
 We'd love to learn more about your use case and help you get it working. So don't hesitate to reach out!
+
+<!-- ## Project Goals
+
+The most important goal of Sidetrek is to create a delightful developer experience for data engineers and data scientists.
+
+Data project scaffolding is just the first step towards that goal.
+
+We believe that development environment is one of the greatest inventions of the last couple of decades. In software engineering, developers can iterate in real-time and this has increased the speed of development by orders of magnitude. This speed is what make building software such a magical experience!
+
+We're trying to bring this to data engineering and data science. -->
 
 ## Project Maturity
 
