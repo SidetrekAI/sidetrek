@@ -149,6 +149,9 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   )
 
   const sidetrekConfigYaml: SidetrekConfig = {
+    metadata: {
+      project_name: projectName,
+    },
     services: {
       dagster: {
         title: 'Dagster',

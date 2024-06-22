@@ -14,6 +14,12 @@ Inside sidetrek-cli-tracking repo:
 - Run the dev server
 - (Optional) Run the migration if required
 
+### To test Sidetrek ui (including bun-server)
+
+- In project root, create `test_proj` Sidetrek project using the CLI
+- Run the frontend: `cd ui && bun run dev`
+- Run the server: `cd bun-server && bun run dev`
+
 ## Release
 
 - Run `bun run release` to create release files in the local /release dir (it creates it from the local project dir)

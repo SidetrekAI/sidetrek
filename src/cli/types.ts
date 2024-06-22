@@ -20,7 +20,12 @@ export interface EnvFileObj {
 }
 
 export interface SidetrekConfig {
+  metadata: SidetrekConfigMetadata
   services: SidetrekConfigServices
+}
+
+export interface SidetrekConfigMetadata {
+  project_name: string
 }
 
 export interface SidetrekConfigServices {

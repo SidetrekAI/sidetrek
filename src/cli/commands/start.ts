@@ -13,6 +13,9 @@ export default async function start(options: any) {
   // Run the core services
   await $`docker compose up -d ${build ? '--build' : ''}`
 
+  // Enter poetry shell
+  await $`poetry shell`.cwd(cwd)
+
   // Run superset
   const supersetConfig = getSupersetConfig(projectName)
   await supersetConfig.run({ build })

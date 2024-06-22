@@ -166,6 +166,14 @@ If there are any breaking changes, we will make it clear in the release notes.
 
 Right now Sidetrek is mostly a set up tool, so any future changes should not impact your existing project scaffolded by Sidetrek. But as we add more advanced features, this may change. If there are any such changes, we will let you know in the release notes.
 
+## Versioning
+
+Given a version number MAJOR.MINOR.PATCH, Sidetrek uses the following versioning strategy:
+
+The PATCH version is incremented when there are backwards-compatible fixes or feature additions.
+The MINOR version is incremented when there are backwards-incompatible fixes or feature additions.
+The MAJOR version is incremented when there are significant backwards-incompatible fixes or feature additions.
+
 ## Contributions
 
 Contributions are always welcome!

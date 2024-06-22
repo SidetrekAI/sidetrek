@@ -13,7 +13,8 @@ export default async function runDbt(dbtCmd: string[]) {
   
   // Pass the command to dbt CLI
   try {
-    const cmd = `poetry run dbt ${dbtCmdStr}`
+    // const cmd = `poetry run dbt ${dbtCmdStr}`
+    const cmd = `dbt ${dbtCmdStr}`
     await $`${{ raw: cmd }}`.cwd(dbtProjectDir)
   } catch(err: any) {
     // Silently exit since dbt will print the error

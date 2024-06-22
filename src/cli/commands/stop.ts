@@ -9,4 +9,7 @@ export default async function stop() {
 
   // Stop superset
   await $`docker compose stop`.cwd(`${cwd}/superset`)
+
+  // Exit poetry shell
+  await $`exit`.cwd(cwd)
 }

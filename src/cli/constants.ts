@@ -23,9 +23,9 @@ export const S_BAR = s('│', '|')
 export const DAGSTER_HOST_PORT = '3000'
 export const DAGSTER_CONTAINER_PORT = '3000'
 export const DAGSTER_VERSION = '^1.6.3'
-export const MELTANO_VERSION = '2.19.1'
-export const DBT_CORE_VERSION = '^1.7.13'
-export const DBT_TRINO_VERSION = '^1.7.1'
+export const MELTANO_VERSION = '3.4.2'
+export const DBT_CORE_VERSION = '^1.8.3'
+export const DBT_TRINO_VERSION = '^1.8.0'
 export const DAGSTER_MELTANO_VERSION = '^1.5.4'
 export const DAGSTER_DBT_VERSION = '^0.23.4'
 

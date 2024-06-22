@@ -137,7 +137,8 @@ export const getDagsterConfig = (projectName: string): DagsterConfig => {
       await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/.gitignore`, '/history\n/storage\n/logs')
     },
     run: async () => {
-      await $`DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 poetry run dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`
+      // await $`DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 poetry run dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`
+      await $`DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`
     },
     ui: async () => {
       await execShell(`open http://localhost:${DAGSTER_HOST_PORT}`)
@@ -192,10 +193,10 @@ export const getDbtConfig = (projectName: string): DbtConfig => {
 
       // Add trino profile
       const trinoDbtProfile = {
-        trino: {
-          target: 'dev',
+        dbt_project: {
+          target: 'trino',
           outputs: {
-            dev: {
+            trino: {
               type: 'trino',
               user: 'trino',
               host: 'localhost',
@@ -224,7 +225,7 @@ export const getDbtConfig = (projectName: string): DbtConfig => {
           'CREATE SCHEMA IF NOT EXISTS {{ schema }}',
         ]), // Add automatic schema generation
         R.dissocPath(['models', projectName, 'example']), // Remove example code
-        R.assocPath(['profile'], 'trino') // Use trino profile
+        R.assocPath(['profile'], 'dbt_project') // Use the created profile above
       )(dbtProjectYamlJson)
       const updatedDbtProjectYaml = YAML.stringify(updatedDbtProjectYamlJson)
       await Bun.write(`./${projectName}/${projectName}/dbt/${projectName}/dbt_project.yml`, updatedDbtProjectYaml)

@@ -13,7 +13,8 @@ export default async function runMeltano(meltanoCmd: string[]) {
   
   // Pass the command to meltano CLI
   try {
-    const cmd = `poetry run meltano ${meltanoCmdStr}`
+    // const cmd = `poetry run meltano ${meltanoCmdStr}`
+    const cmd = `meltano ${meltanoCmdStr}`
     await $`${{ raw: cmd }}`.cwd(meltanoProjectDir)
   } catch(err: any) {
     // Silently exit since meltano will print the error
