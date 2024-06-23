@@ -407,6 +407,22 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   /**
    *
+   * Add Sidetrek UI
+   *
+   */
+  s.start('Adding Sidetrek UI (this may take a couple minutes)')
+  const sidetrekUIStartTime = startStopwatch()
+  const sidetrekUIResp = await execShell(`cd ${projectName} && git clone https://github.com/SidetrekAI/sidetrek-ui.git && bun install --cwd ./sidetrek-ui/ui && bun install --cwd ./sidetrek-ui/server`)
+  if (sidetrekUIResp?.error) {
+    const errorMessage = `Sorry, something went wrong while adding Sidetrek UI.\n\n${sidetrekUIResp.error?.stderr}`
+    await exitOnError(errorMessage)
+  } else {
+    const sidetrekUIDuration = endStopwatch(sidetrekUIStartTime)
+    s.stop('Sidetrek UI set up successfully.' + chalk.gray(` [${sidetrekUIDuration}ms]`))
+  }
+
+  /**
+   *
    * Add example code
    *
    */

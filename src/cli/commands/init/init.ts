@@ -16,6 +16,7 @@ export default async function init(options: any) {
    *    - Python 3.10-3.11
    *    - Poetry
    *    - git (for Superset)
+   *    - bun (for Sidetrek UI)
    *
    */
 
@@ -30,13 +31,13 @@ export default async function init(options: any) {
           message:
             'Sidetrek requires ' +
             chalk.underline.yellow(`Python ${SUPPORTED_PYTHON_VERSIONS_STR}`) +
-            `, ${chalk.underline.yellow('Poetry')}, and git CLI installed. Are you ready to continue?`,
+            `, ${chalk.underline.yellow('Poetry')}, ${chalk.underline.yellow('Bun')}, and ${chalk.underline.yellow('git CLI')} installed. Are you ready to continue?`,
         })
       },
       pythonVersion: async ({ results }) => {
         if (!results.prerequisites) {
           p.cancel(
-            'No worries - please try again after installing the prerequisites.\n   (e.g. `pyenv install 3.10 && pyenv global 3.10 && pip install poetry`)'
+            'No worries - please try again after installing the prerequisites.\n   \n   Install python 3.11: `pyenv install 3.11 && pyenv global 3.11`\n   Install poetry: `pip install poetry`\n   Install bun: `curl -fsSL https://bun.sh/install | bash`\n   Install git CLI: https://git-scm.com/downloads'
           )
           process.exit(0)
         }

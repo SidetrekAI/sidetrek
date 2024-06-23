@@ -266,7 +266,7 @@ export const track = async (payload: TrackingArgs) => {
     return trackingRes
   } catch (err: any) {
     if (process.env.CUSTOM_ENV === 'development') {
-      console.log('tracking payload', payload)
+      // console.log('tracking payload', payload)
       console.error('tracking err', err)
     }
 
