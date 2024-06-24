@@ -47,6 +47,8 @@ import {
   ICEBERG_PG_HOST_PORT,
   SUPPORTED_PYTHON_VERSIONS,
   SUPPORTED_PYTHON_VERSIONS_STR,
+  USERINFO_FILEPATH,
+  SIDETREK_CONFIG_FILENAME,
 } from '@cli/constants'
 import gitignore from '@cli/templates/gitignore'
 import { initTool } from '../../utils'
@@ -185,12 +187,17 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
       },
     },
   }
-  await Bun.write(`./${projectName}/sidetrek.config.yaml`, YAML.stringify(sidetrekConfigYaml))
+  await Bun.write(`./${projectName}/${SIDETREK_CONFIG_FILENAME}`, YAML.stringify(sidetrekConfigYaml))
 
+  // Assign a generatedUserId to the user for tracking purposes
   const userinfo = {
     generatedUserId: uuidv4(),
   }
-  await Bun.write(`./${projectName}/.sidetrek/userinfo.json`, JSON.stringify(userinfo))
+  await Bun.write(`./${projectName}/${USERINFO_FILEPATH}`, JSON.stringify(userinfo))
+
+  // Track the init command as soon as generated user id is created
+  // NOTE: `sidetrek init` command cannot be tracked in the postAction hook since there's no generated user id yet
+  await track({ command: 'init', metadata: { started: true, cliInputs } })
 
   if (poetryNewResp?.error) {
     const errorMessage = `Sorry, something went wrong while scaffolding the project via Poetry.\n\n${poetryNewResp.error?.stderr}`
@@ -624,5 +631,5 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    * Track success
    *
    */
-  track({ command: 'init', metadata: { success: true, cliInputs, duration: totalDuration } })
+  await track({ command: 'init', metadata: { success: true, cliInputs, duration: totalDuration } })
 }

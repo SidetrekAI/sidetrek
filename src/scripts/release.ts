@@ -20,14 +20,14 @@ const { values: options, positionals } = parseArgs({
   allowPositionals: true,
 })
 
-const availableArchs = ['linux-x64', 'linux-arm64', 'windows-x64', 'darwin-x64', 'darwin-arm64'] as const
+const availableArchs = ['linux-x64', 'linux-arm64', 'darwin-x64', 'darwin-arm64'] as const
 type Arch = (typeof availableArchs)[number]
 const archOption = options.arch as Arch | undefined
 
-const productionOption = options.production as boolean
-const tempBuildDirPath = './temp/sidetrek'
+// const productionOption = options.production as boolean
+const tempBuildDirPath = `${cwd}/temp/sidetrek`
 
-console.log('Is production release:', productionOption)
+// console.log('Is production release:', productionOption)
 
 const handleError = (err: any) => {
   console.log(`Failed with code ${err.exitCode}`)
@@ -78,17 +78,10 @@ const build = async (version: string, arch: Arch) => {
     handleError(err)
   }
 }
-
-const runGithubRelease = async (version: string) => {}
-
 const tar = async (version: string, arch: Arch) => {
   try {
-    // Copy the release script
-    await $`cp ./src/scripts/install.sh ${tempBuildDirPath}/${version}-${arch}/install.sh`
-    console.log('Copied release script.')
-
-    // Tar
-    await $`tar -czvf ./release/sidetrek.${version}-${arch}.tar.gz -C ${tempBuildDirPath}/${version}-${arch} .`
+    // Tar the executable
+    await $`tar -czvf ${cwd}/release/sidetrek.${version}-${arch}.tar.gz sidetrek`.cwd(`${tempBuildDirPath}/${version}-${arch}`)
     console.log('Tar created successfully.')
   } catch (err) {
     console.error('Error creating tar')
@@ -96,24 +89,21 @@ const tar = async (version: string, arch: Arch) => {
   }
 }
 
-const buildAndTar = async (version: string, arch: Arch) => {
-  await build(version, arch)
-  await tar(version, arch)
-}
-
 async function main() {
   await createDirs()
   await incrementVersion()
 
-  const version = await getPackageVersion()
+  const version = 'v' + (await getPackageVersion())
 
   const archsToRelease = archOption ? [archOption] : availableArchs
-  const promises = archsToRelease.map((_arch) => buildAndTar(version, _arch))
-  await Promise.all(promises)
 
-  if (productionOption) {
-    await runGithubRelease(version)
-  }
+  // Build
+  const buildPromises = archsToRelease.map((_arch) => build(version, _arch))
+  await Promise.all(buildPromises)
+
+  // Tar
+  const tarPromises = archsToRelease.map((_arch) => tar(version, _arch))
+  await Promise.all(tarPromises)
 
   // Clean up
   await $`rm -rf ${tempBuildDirPath}`

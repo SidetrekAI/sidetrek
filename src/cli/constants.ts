@@ -1,8 +1,9 @@
 import chalk from 'chalk'
 import isUnicodeSupported from 'is-unicode-supported'
 
-export const sidetrek_dirname = 'sidetrek'
-export const sidetrek_config_name = 'sidetrek.yaml'
+export const SIDETREK_DIRNAME = '.sidetrek'
+export const SIDETREK_CONFIG_FILENAME = 'sidetrek.config.yaml'
+export const USERINFO_FILEPATH = `${SIDETREK_DIRNAME}/userinfo.json`
 
 export const colors = {
   sidetrekPink: chalk.hex('#fd6795'),

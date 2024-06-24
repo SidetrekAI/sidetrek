@@ -117,9 +117,17 @@ export default async function runCli() {
 
   // Track every command
   program.hook('postAction', async (thisCommand, actionCommand) => {
+    // Do not track top level commands (e.g. `sidetrek --version`); this can be run from any dir, which will create different generated user id
+    if (R.isEmpty(thisCommand.args)) return
+
+    // SPECIAL CASE: `sidetrek init` does not have a generated user id yet, so handle the tracking inside the command 
+    if (thisCommand.args[0] === 'init') return
+
+    const argsStr = thisCommand.args.join(' ')
+
     track({
-      command: actionCommand.name(),
-      metadata: { args: actionCommand.args, options: actionCommand.opts() },
+      command: `${thisCommand.name()} ${argsStr}`,
+      metadata: { options: thisCommand.opts() },
     })
   })
 
