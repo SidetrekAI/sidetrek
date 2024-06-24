@@ -192,10 +192,10 @@ export const getDbtConfig = (projectName: string): DbtConfig => {
 
       // Add trino profile
       const trinoDbtProfile = {
-        trino: {
-          target: 'dev',
+        dbt_project: {
+          target: 'trino',
           outputs: {
-            dev: {
+            trino: {
               type: 'trino',
               user: 'trino',
               host: 'localhost',
@@ -224,7 +224,7 @@ export const getDbtConfig = (projectName: string): DbtConfig => {
           'CREATE SCHEMA IF NOT EXISTS {{ schema }}',
         ]), // Add automatic schema generation
         R.dissocPath(['models', projectName, 'example']), // Remove example code
-        R.assocPath(['profile'], 'trino') // Use trino profile
+        R.assocPath(['profile'], 'dbt_project') // Use the created profile above
       )(dbtProjectYamlJson)
       const updatedDbtProjectYaml = YAML.stringify(updatedDbtProjectYamlJson)
       await Bun.write(`./${projectName}/${projectName}/dbt/${projectName}/dbt_project.yml`, updatedDbtProjectYaml)
