@@ -137,8 +137,8 @@ export const getDagsterConfig = (projectName: string): DagsterConfig => {
       await Bun.write(`./${projectName}/${projectName}/dagster/${projectName}/.gitignore`, '/history\n/storage\n/logs')
     },
     run: async () => {
-      // await $`DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 poetry run dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`
-      await $`DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`
+      await $`DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 poetry run dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`
+      // await $`DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1 dagster dev -h 0.0.0.0 -p ${DAGSTER_HOST_PORT}`
     },
     ui: async () => {
       await execShell(`open http://localhost:${DAGSTER_HOST_PORT}`)

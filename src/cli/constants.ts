@@ -28,6 +28,8 @@ export const DBT_CORE_VERSION = '^1.8.3'
 export const DBT_TRINO_VERSION = '^1.8.0'
 export const DAGSTER_MELTANO_VERSION = '^1.5.4'
 export const DAGSTER_DBT_VERSION = '^0.23.4'
+export const SIDETREK_UI_FRONTEND_PORT = '3030'
+export const SIDETREK_UI_SERVER_PORT = '4040'
 
 export const SHARED_NETWORK_NAME = 'shared_network'
 export const MINIO_SERVER_HOST_PORT = '9000'

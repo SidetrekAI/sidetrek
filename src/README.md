@@ -16,10 +16,7 @@ Inside sidetrek-cli-tracking repo:
 
 ### To test Sidetrek ui (including bun-server)
 
-- (FIRST TIME ONLY) In project root, create `test_proj` Sidetrek project (`./build/sidetrek init`)
-- In `..sidetrek-ui/ui`, run the frontend: `bun run dev`
-- In `..sidetrek-ui/server`, run the server: `bun run dev`
-- In project root, run `dev-sidetrek start`
+See `sidetrek-ui` repo
 
 ## Release
 

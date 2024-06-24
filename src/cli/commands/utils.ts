@@ -1,4 +1,5 @@
 import * as R from 'ramda'
+import { $ } from 'bun'
 import {
   getDagsterConfig,
   getDagsterDbtConfig,
@@ -10,6 +11,7 @@ import {
   type ToolConfig,
 } from '../toolConfigs'
 import type { ToolInitResponse } from '../types'
+import { DAGSTER_HOST_PORT, SIDETREK_UI_FRONTEND_PORT, SIDETREK_UI_SERVER_PORT } from '@cli/constants'
 
 export const initTool = async (projectName: string, toolId: string): Promise<ToolInitResponse> => {
   const toolConfigs: { [key: string]: ToolConfig } = {
@@ -75,4 +77,10 @@ export const initTool = async (projectName: string, toolId: string): Promise<Too
     name,
     response: `${name} successfully initialized!`,
   }
+}
+
+export const killSidetrekUI = async () => {
+  const cwd = process.cwd()
+  await $`kill -9 $(lsof -t -i:${SIDETREK_UI_FRONTEND_PORT})`.cwd(cwd)
+  await $`kill -9 $(lsof -t -i:${SIDETREK_UI_SERVER_PORT})`.cwd(cwd)
 }

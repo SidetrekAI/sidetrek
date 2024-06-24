@@ -85,8 +85,8 @@ export default async function runCli() {
     .action(async (meltanoCmd) => {
       // Must handle --version manually for subcommands (Commanderjs bug)
       if (process.argv[4] === '--version') {
-        // await $`poetry run meltano --version`
-        await $`meltano --version`
+        await $`poetry run meltano --version`
+        // await $`meltano --version`
       } else {
         runMeltano(meltanoCmd)
       }
@@ -101,8 +101,8 @@ export default async function runCli() {
     .action(async (dbtCmd) => {
       // Must handle --version manually for subcommands (Commanderjs bug)
       if (process.argv[4] === '--version') {
-        // await $`poetry run dbt --version`
-        await $`dbt --version`
+        await $`poetry run dbt --version`
+        // await $`dbt --version`
       } else {
         runDbt(dbtCmd)
       }
