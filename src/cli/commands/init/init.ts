@@ -30,7 +30,7 @@ export default async function init(options: any) {
           message:
             'Sidetrek requires ' +
             chalk.underline.yellow(`Python ${SUPPORTED_PYTHON_VERSIONS_STR}`) +
-            `, ${chalk.underline.yellow('Poetry')}, and git CLI installed. Are you ready to continue?`,
+            `, ${chalk.underline.yellow('Poetry')}, and ${chalk.underline.yellow('git CLI')} installed. Are you ready to continue?`,
         })
       },
       pythonVersion: async ({ results }) => {
