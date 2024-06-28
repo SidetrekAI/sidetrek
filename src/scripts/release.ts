@@ -107,7 +107,7 @@ async function main() {
 
   // Clean up
   await $`rm -rf ${tempBuildDirPath}`
-  console.log('Done!')
+  console.log(`Done releasing ${version}!`)
 }
 
 await main()
