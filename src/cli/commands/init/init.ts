@@ -2,7 +2,12 @@ import * as p from '@clack/prompts'
 import * as R from 'ramda'
 import { setTimeout as sleep } from 'node:timers/promises'
 import chalk from 'chalk'
-import { SUPPORTED_PYTHON_VERSIONS, SUPPORTED_PYTHON_VERSIONS_STR, colors } from '../../constants'
+import {
+  SUPPORTED_DOCKER_VERSIONS_STR,
+  SUPPORTED_PYTHON_VERSIONS,
+  SUPPORTED_PYTHON_VERSIONS_STR,
+  colors,
+} from '../../constants'
 import { validateProjectName } from '../../validators'
 import { clackLog, endStopwatch, startStopwatch, track } from '../../utils'
 import { buildDagsterIcebergTrinoStack } from './stacks/dagsterIcebergTrinoStack'
@@ -16,6 +21,7 @@ export default async function init(options: any) {
    *    - Python 3.10-3.11
    *    - Poetry
    *    - git (for Superset)
+   *    - Docker
    *
    */
 
@@ -30,13 +36,42 @@ export default async function init(options: any) {
           message:
             'Sidetrek requires ' +
             chalk.underline.yellow(`Python ${SUPPORTED_PYTHON_VERSIONS_STR}`) +
-            `, ${chalk.underline.yellow('Poetry')}, and ${chalk.underline.yellow('git CLI')} installed. Are you ready to continue?`,
+            `, ${chalk.underline.yellow('Poetry')}, ${chalk.underline.yellow('git')} and ` +
+            chalk.underline.yellow(`Docker ${SUPPORTED_DOCKER_VERSIONS_STR}`) +
+            ` installed.` +
+            ` Are you ready to continue?`,
         })
       },
       pythonVersion: async ({ results }) => {
         if (!results.prerequisites) {
           p.cancel(
-            'No worries - please try again after installing the prerequisites.\n   (e.g. `pyenv install 3.10 && pyenv global 3.10 && pip install poetry`)'
+            'No worries - please try again after installing the prerequisites.' +
+              '\n   ' +
+              '\n   ' +
+              'Install prerequisites' +
+              '\n   ' +
+              '-----' +
+              '\n   ' +
+              'Python 3.11: `pyenv install 3.11 && pyenv global 3.11`' +
+              '\n   ' +
+              'Poetry: `pip install poetry`' +
+              '\n   ' +
+              'git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git' +
+              '\n   ' +
+              'Docker: https://docs.docker.com/engine/install/' +
+              '\n   ' +
+              '\n   ' +
+              'Verify installation' +
+              '\n   ' +
+              '-----' +
+              '\n   ' +
+              'Python: `python --version`' +
+              '\n   ' +
+              'Poetry: `poetry --version`' +
+              '\n   ' +
+              'git: `git --version`' +
+              '\n   ' +
+              'Docker: `docker --version`'
           )
           process.exit(0)
         }
