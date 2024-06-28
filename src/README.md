@@ -20,7 +20,7 @@ Inside sidetrek-cli-tracking repo:
 - Create a PR and merge the latest changes to `dev` and then to `main`
 - Go to Github Releases to create a new release with the same version and upload the generated executables in /release
 
-When the user downloads the CLI from `curl` (`curl -fsSL https://sidetrek.com/cli.sh | sh`), it automatically detects the latest version and downloads/installs them.
+When the user downloads the CLI from `curl` (`curl -fsSL https://sidetrek.com/cli | bash`), it automatically detects the latest version and downloads/installs them.
 
 - NOTE: The `curl` command downloads the latest version excluding pre-releases
 

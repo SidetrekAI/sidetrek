@@ -15,6 +15,7 @@ export const colors = {
 
 export const SUPPORTED_PYTHON_VERSIONS = ['3.7', '3.8']
 export const SUPPORTED_PYTHON_VERSIONS_STR = '3.10-3.11'
+export const SUPPORTED_DOCKER_VERSIONS_STR = '>24'
 
 const unicode = isUnicodeSupported()
 const s = (c: string, fallback: string) => (unicode ? c : fallback)
