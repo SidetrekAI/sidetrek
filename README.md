@@ -47,7 +47,7 @@ If you're new to Sidetrek, the best place to start is our [Get Started](https://
 Download the latest release of Sidetrek CLI.
 
 ```bash
-curl -fsSL https://sidetrek.com/cli | sh
+curl -fsSL https://sidetrek.com/cli | bash
 ```
 
 Once you install it, verify the installation by checking the version:
@@ -56,12 +56,20 @@ Once you install it, verify the installation by checking the version:
 sidetrek --version
 ```
 
-### Updating Sidetrek
+### Upgrade Sidetrek
 
 To update Sidetrek to the latest version, you simply need to run the install command again:
 
 ```bash
-curl -fsSL https://sidetrek.com/cli | sh
+curl -fsSL https://sidetrek.com/cli | bash
+```
+
+### Uninstall Sidetrek
+
+To remove Sidetrek, run:
+
+```bash
+rm -rf ~/.sidetrek
 ```
 
 ### Initialize a Project
