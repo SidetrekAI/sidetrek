@@ -71,7 +71,7 @@ export default async function init(options: any) {
               '\n   ' +
               'git: `git --version`' +
               '\n   ' +
-              'Docker: `docker --version`'
+              'Docker: `docker run hello-world` (for Linux users, make sure you can run it without `sudo`)'
           )
           process.exit(0)
         }
