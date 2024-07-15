@@ -47,6 +47,10 @@ export const TRINO_VERSION = '437'
 export const TRINO_HOST_PORT = '8080'
 export const TRINO_CONTAINER_PORT = '8080'
 export const SUPERSET_HOST_PORT = '8088'
+export const JUPYTERLAB_HOST_PORT = '8889'
+export const JUPYTERLAB_CONTAINER_PORT = '8888'
+export const JUPYTERLAB_CONTAINER_VOLUME_PATH = '/home/jovyan/work'
+export const JUPYTERLAB_TOKEN = 'admin_secret'
 
 export const S3_ENDPOINT = `http://minio:${MINIO_SERVER_HOST_PORT}`
 export const AWS_REGION = 'us-west-2'

@@ -11,6 +11,7 @@ import logs from './commands/logs'
 import runMeltano from './commands/run/meltano'
 import { runTrinoShell } from './commands/run/trino'
 import runDbt from './commands/run/dbt'
+import runDagster from './commands/run/dagster'
 
 const program = new Command()
 
@@ -91,6 +92,21 @@ export default async function runCli() {
       }
     })
 
+  const runDagsterCommand = runCommand
+    .command('dagster')
+    .description('Run Dagster commands')
+    .helpOption(false)
+    .argument('[string...]', 'Dagster command to run')
+    .allowUnknownOption()
+    .action(async (dagsterCmd) => {
+      // Must handle --version manually for subcommands (Commanderjs bug)
+      if (process.argv[4] === '--version') {
+        await $`poetry run dagster --version`
+      } else {
+        runDagster(dagsterCmd)
+      }
+    })
+
   const runDbtCommand = runCommand
     .command('dbt')
     .description('Run DBT commands')
@@ -120,7 +136,7 @@ export default async function runCli() {
     // Do not track top level commands (e.g. `sidetrek --version`); this can be run from any dir, which will create different generated user id
     if (R.isEmpty(thisCommand.args)) return
 
-    // SPECIAL CASE: `sidetrek init` does not have a generated user id yet, so handle the tracking inside the command 
+    // SPECIAL CASE: `sidetrek init` does not have a generated user id yet, so handle the tracking inside the command
     if (thisCommand.args[0] === 'init') return
 
     const argsStr = thisCommand.args.join(' ')

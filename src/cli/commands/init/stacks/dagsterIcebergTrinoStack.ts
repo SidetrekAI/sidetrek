@@ -15,7 +15,7 @@ import {
   createOrUpdateEnvFile,
   track,
 } from '@cli/utils'
-import { getIcebergConfig, getMinioConfig, getSupersetConfig, getTrinoConfig } from '@cli/toolConfigs'
+import { getIcebergConfig, getJupyterlabConfig, getMinioConfig, getSupersetConfig, getTrinoConfig } from '@cli/toolConfigs'
 import {
   SHARED_NETWORK_NAME,
   MINIO_VOLUME,
@@ -197,7 +197,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   // Track the init command as soon as generated user id is created
   // NOTE: `sidetrek init` command cannot be tracked in the postAction hook since there's no generated user id yet
-  await track({ command: 'init', metadata: { started: true, cliInputs } })
+  await track({ command: 'init', metadata: { started: true, ...cliInputs } })
 
   if (poetryNewResp?.error) {
     const errorMessage = `Sorry, something went wrong while scaffolding the project via Poetry.\n\n${poetryNewResp.error?.stderr}`
@@ -276,6 +276,19 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     s.stop('Trino set up successfully.' + chalk.gray(` [${trinoInitDuration}ms]`))
   }
 
+  // Set up Jupyterlab
+  s.start('Setting up Jupyterlab (this may take a couple minutes)')
+  const jupyterlabInitStartTime = startStopwatch()
+  const jupyterlabInitResp = await initTool(projectName, 'jupyterlab')
+
+  if (jupyterlabInitResp?.error) {
+    const errorMessage = `Sorry, something went wrong while intializing Jupyterlab.\n\n${jupyterlabInitResp.error?.stderr}`
+    await exitOnError(errorMessage)
+  } else {
+    const jupyterlabInitDuration = endStopwatch(jupyterlabInitStartTime)
+    s.stop('Jupyterlab set up successfully.' + chalk.gray(` [${jupyterlabInitDuration}ms]`))
+  }
+
   // Set up Superset
   s.start('Setting up Superset (this may take a couple minutes)')
   const supersetInitStartTime = startStopwatch()
@@ -303,6 +316,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     getMinioConfig(projectName),
     getIcebergConfig(projectName),
     getTrinoConfig(projectName),
+    getJupyterlabConfig(projectName),
     getSupersetConfig(projectName),
   ]
   const dcNetworks = { [SHARED_NETWORK_NAME]: { driver: 'bridge' } }
@@ -631,5 +645,5 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    * Track success
    *
    */
-  await track({ command: 'init', metadata: { success: true, cliInputs, duration: totalDuration } })
+  await track({ command: 'init', metadata: { success: true, ...cliInputs, duration: totalDuration } })
 }

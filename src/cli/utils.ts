@@ -197,24 +197,31 @@ export const createOrUpdateEnvFile = async (envFilePath: string, envFileObj: Env
   }
 }
 
-export const retrieveGeneratedUserId = async () => {
+interface RetrieveGeneratedUserIdOptions {
+  projectRootDirpath?: string
+}
+
+export const retrieveGeneratedUserId = async (options: RetrieveGeneratedUserIdOptions) => {
+  const { projectRootDirpath } = options || {}
+
   // Check if the uuid exists in .sidetrek
-  const userinfoExists = await Bun.file(`${cwd}/${USERINFO_FILEPATH}`).exists()
+  const userInfoFilepath = `${projectRootDirpath || cwd}/${USERINFO_FILEPATH}`
+  const userinfoExists = await Bun.file(`${userInfoFilepath}`).exists()
 
   // If not, create it and store it
   if (!userinfoExists) {
     const generatedUserId = uuidv4()
-    await Bun.write(`${cwd}/${USERINFO_FILEPATH}`, JSON.stringify({ generatedUserId }))
+    await Bun.write(`${userInfoFilepath}`, JSON.stringify({ generatedUserId }))
     return generatedUserId
   }
 
   // If it exists, but doesn't have uuid in it
-  const userinfo = await Bun.file(`${cwd}/${USERINFO_FILEPATH}`).json()
+  const userinfo = await Bun.file(`${userInfoFilepath}`).json()
 
   if (!userinfo?.generatedUserId) {
     const generatedUserId = uuidv4()
     const updatedUserinfo = { ...userinfo, generatedUserId }
-    await Bun.write(`${cwd}/${USERINFO_FILEPATH}`, JSON.stringify(updatedUserinfo))
+    await Bun.write(`${userInfoFilepath}`, JSON.stringify(updatedUserinfo))
     return generatedUserId
   }
 
@@ -247,11 +254,14 @@ export const track = async (payload: TrackingArgs) => {
     return
   }
 
+  const projectRootDirpath = payload.command === 'init' ? `${cwd}/${payload.metadata?.projectName}` : cwd
+  const generatedUserId = await retrieveGeneratedUserId({ projectRootDirpath })
+
   try {
     const trackingRes = await ky
       .post(cliTrackingServerUrl, {
         json: {
-          generated_user_id: await retrieveGeneratedUserId(),
+          generated_user_id: generatedUserId,
           ...payload,
           metadata: {
             ...payload.metadata,
