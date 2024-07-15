@@ -49,6 +49,7 @@ export const TRINO_CONTAINER_PORT = '8080'
 export const SUPERSET_HOST_PORT = '8088'
 export const JUPYTERLAB_HOST_PORT = '8889'
 export const JUPYTERLAB_CONTAINER_PORT = '8888'
+export const JUPYTERLAB_CONTAINER_HOME_PATH = '/home/jovyan'
 export const JUPYTERLAB_CONTAINER_VOLUME_PATH = '/home/jovyan/work'
 export const JUPYTERLAB_TOKEN = 'admin_secret'
 

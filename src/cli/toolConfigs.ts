@@ -43,6 +43,8 @@ import dagsterMeltanoMeltanoPy from '@cli/templates/dagsterIcebergTrinoStack/dag
 import dagsterDbtDbtAssetsPy from '@cli/templates/dagsterIcebergTrinoStack/dagster-dbt/dbt_assets.py'
 import dagsterDbtInitPy from '@cli/templates/dagsterIcebergTrinoStack/dagster-dbt/__init__.py'
 import jupyterlabDockerfile from '@cli/templates/jupyterlabDockerfile'
+import jupyterlabMagicsPy from '@cli/templates/dagsterIcebergTrinoStack/jupyterlab/magics/magics.py'
+import jupyterlabDirectivesPy from '@cli/templates/dagsterIcebergTrinoStack/jupyterlab/nbdev_extensions/directives.py'
 
 const cwd = process.cwd()
 
@@ -546,8 +548,8 @@ export const getJupyterlabConfig = (projectName: string): JupyterlabConfig => {
     name: 'JupyterLab',
     desc: 'An open-source web application for interactive computing.',
     init: async () => {
-      // Create jupyterlab dir with requirements.in and create Dockerfile.jupyterlab
-      return await execShell(`mkdir jupyterlab`)
+      // Create jupyterlab dir
+      return await execShell(`mkdir -p jupyterlab/magics && mkdir -p jupyterlab/nbdev_extensions`)
     },
     postInit: async () => {
       // Add requirements.in
@@ -555,6 +557,12 @@ export const getJupyterlabConfig = (projectName: string): JupyterlabConfig => {
 
       // Add Dockerfile.jupyterlab
       await Bun.write(`./${projectName}/Dockerfile.jupyterlab`, jupyterlabDockerfile)
+
+      // Add magics
+      await Bun.write(`./${projectName}/jupyterlab/magics/magics.py`, jupyterlabMagicsPy)
+
+      // Add nbdev_extensions
+      await Bun.write(`./${projectName}/jupyterlab/nbdev_extensions/directives.py`, jupyterlabDirectivesPy)
     },
     dockerComposeObj,
   }
