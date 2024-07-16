@@ -522,8 +522,9 @@ export const getDagsterDbtConfig = (projectName: string): DagsterDbtConfig => {
 
 // Jupyterlab
 export interface JupyterlabConfig extends MinimalToolConfig {
-  init?: () => Promise<ShellResponse>
-  postInit?: () => any
+  init: () => Promise<ShellResponse>
+  install: () => Promise<ShellResponse>
+  postInit: () => any
   dockerComposeObj: any
 }
 
@@ -549,20 +550,33 @@ export const getJupyterlabConfig = (projectName: string): JupyterlabConfig => {
     desc: 'An open-source web application for interactive computing.',
     init: async () => {
       // Create jupyterlab dir
-      return await execShell(`mkdir -p jupyterlab/magics && mkdir -p jupyterlab/nbdev_extensions`)
+      return await execShell(`mkdir -p jupyterlab/magics`)
+    },
+    install: async () => {
+      return await execShell(`poetry add nbdev nbdev-extensions`, { cwd: `${cwd}/${projectName}` })
     },
     postInit: async () => {
-      // Add requirements.in
-      await Bun.write(`./${projectName}/jupyterlab/requirements.in`, 'dagster\nzxpy\ndbt-core\ndbt-trino\nmeltano\n')
+      // Add requirements.in (these are packages that are made available in the jupyterlab)
+      const packages = [
+        'poetry',
+        'nbdev',
+        'nbdev-extensions',
+        'dagster',
+        'dbt-core',
+        'dbt-trino',
+        'meltano',
+        'trino',
+        'duckdb',
+        'pandas',
+      ]
+
+      await Bun.write(`./${projectName}/jupyterlab/requirements.in`, packages.join('\n'))
 
       // Add Dockerfile.jupyterlab
       await Bun.write(`./${projectName}/Dockerfile.jupyterlab`, jupyterlabDockerfile)
 
       // Add magics
       await Bun.write(`./${projectName}/jupyterlab/magics/magics.py`, jupyterlabMagicsPy)
-
-      // Add nbdev_extensions
-      await Bun.write(`./${projectName}/jupyterlab/nbdev_extensions/directives.py`, jupyterlabDirectivesPy)
     },
     dockerComposeObj,
   }

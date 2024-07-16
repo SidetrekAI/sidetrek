@@ -12,6 +12,7 @@ import runMeltano from './commands/run/meltano'
 import { runTrinoShell } from './commands/run/trino'
 import runDbt from './commands/run/dbt'
 import runDagster from './commands/run/dagster'
+import exportNotebooks from './commands/notebook/export'
 
 const program = new Command()
 
@@ -129,6 +130,16 @@ export default async function runCli() {
     .description('Enter Trino shell')
     .action(() => {
       runTrinoShell()
+    })
+
+  const notebookCommand = program.command('notebook').description('Run notebook related commands')
+
+  const notebookExportCommand = notebookCommand
+    .command('export')
+    .description('Export notebooks to HTML')
+    .argument('[string]', 'Service to view logs for')
+    .action((notebookToExport) => {
+      exportNotebooks(notebookToExport)
     })
 
   // Track every command

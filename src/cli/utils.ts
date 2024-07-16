@@ -241,7 +241,6 @@ export const track = async (payload: TrackingArgs) => {
   // Track os and arch
   let os = undefined
   let arch = undefined
-
   try {
     os = (await $`uname -s`.text()).replace('\n', '').toLowerCase()
     arch = (await $`uname -m`.text()).replace('\n', '').toLowerCase()
