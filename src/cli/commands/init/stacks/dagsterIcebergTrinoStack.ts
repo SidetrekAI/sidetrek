@@ -29,7 +29,6 @@ import {
   ICEBERG_PG_CATALOG_PASSWORD_ENVNAME,
   ICEBERG_PG_CATALOG_DB_ENVNAME,
   PROJECT_DIRNAME_ENVNAME,
-  TRINO_USER_ENVNAME,
   ICEBERG_CATALOG_NAME_ENVNAME,
   S3_ENDPOINT,
   AWS_REGION,
@@ -49,6 +48,9 @@ import {
   SUPPORTED_PYTHON_VERSIONS_STR,
   USERINFO_FILEPATH,
   SIDETREK_CONFIG_FILENAME,
+  TRINO_USER,
+  TRINO_USER_ENVNAME,
+  TRINO_HOST_PORT_ENVNAME,
 } from '@cli/constants'
 import gitignore from '@cli/templates/gitignore'
 import { initTool } from '../../utils'
@@ -362,6 +364,8 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     [ICEBERG_PG_CATALOG_USER_ENVNAME]: `iceberg`,
     [ICEBERG_PG_CATALOG_PASSWORD_ENVNAME]: `iceberg`,
     [ICEBERG_PG_CATALOG_DB_ENVNAME]: `iceberg`,
+    [TRINO_USER_ENVNAME]: TRINO_USER,
+    [TRINO_HOST_PORT_ENVNAME]: TRINO_HOST_PORT,
   }
   await createOrUpdateEnvFile(`./${projectName}/.env`, rootEnvFileObj)
 
@@ -370,7 +374,6 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // Create dagster .env file
   const dagsterEnvFileObj = {
     [PROJECT_DIRNAME_ENVNAME]: `${projectName}`,
-    [TRINO_USER_ENVNAME]: `admin`,
   }
   await createOrUpdateEnvFile(`./${projectName}/${projectName}/dagster/${projectName}/.env`, dagsterEnvFileObj)
 

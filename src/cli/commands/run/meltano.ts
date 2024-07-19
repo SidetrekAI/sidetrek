@@ -1,12 +1,14 @@
 import path from 'path'
 import { $ } from 'bun'
+import { getProjectName, getSidetrekHome } from '@cli/utils'
 
-// NOTE: cwd is the root project dir
-const cwd = process.cwd()
+const sidetrekHome = getSidetrekHome()
+const projectName = getProjectName()
+console.log(`sidetrekHome: ${sidetrekHome}`)
+console.log(`projectName: ${projectName}`)
 
 export default async function runMeltano(meltanoCmd: string[]) {
-  const projectName = path.basename(cwd)
-  const meltanoProjectDir = `${cwd}/${projectName}/meltano`
+  const meltanoProjectDir = `${sidetrekHome}/${projectName}/meltano`
 
   // `meltanoCmd` includes the command (after `sidetrek run meltano`) and options
   const meltanoCmdStr = meltanoCmd.join(' ')

@@ -1,14 +1,12 @@
 import path from 'path'
 import { $ } from 'bun'
 import { getDagsterConfig, getSupersetConfig } from '../toolConfigs'
+import { getProjectName, getSidetrekHome } from '@cli/utils'
 
-// NOTE: cwd is the root project dir
-const cwd = process.cwd()
+const projectName = getProjectName()
 
 export default async function start(options: any) {
   const { build = false, skip = [] } = options
-
-  const projectName = path.basename(cwd)
 
   // Run the core services
   await $`docker compose up -d ${build ? '--build' : ''}`

@@ -2,7 +2,7 @@ import * as R from 'ramda'
 import { $ } from 'bun'
 import { Command } from 'commander'
 import { colors } from './constants'
-import { getPackageVersion, track } from './utils'
+import { getPackageVersion, manuallyHandleVersion, track } from './utils'
 import init from './commands/init/init'
 import start from './commands/start'
 import stop from './commands/stop'
@@ -13,6 +13,7 @@ import { runTrinoShell } from './commands/run/trino'
 import runDbt from './commands/run/dbt'
 import runDagster from './commands/run/dagster'
 import exportNotebooks from './commands/notebook/export'
+import createNotebook from './commands/notebook/new'
 
 const program = new Command()
 
@@ -85,12 +86,8 @@ export default async function runCli() {
     .argument('[string...]', 'Meltano command to run')
     .allowUnknownOption()
     .action(async (meltanoCmd) => {
-      // Must handle --version manually for subcommands (Commanderjs bug)
-      if (process.argv[4] === '--version') {
-        await $`poetry run meltano --version`
-      } else {
-        runMeltano(meltanoCmd)
-      }
+      await manuallyHandleVersion('poetry run dagster --version')
+      runMeltano(meltanoCmd)
     })
 
   const runDagsterCommand = runCommand
@@ -100,12 +97,8 @@ export default async function runCli() {
     .argument('[string...]', 'Dagster command to run')
     .allowUnknownOption()
     .action(async (dagsterCmd) => {
-      // Must handle --version manually for subcommands (Commanderjs bug)
-      if (process.argv[4] === '--version') {
-        await $`poetry run dagster --version`
-      } else {
-        runDagster(dagsterCmd)
-      }
+      await manuallyHandleVersion('poetry run dagster --version')
+      runDagster(dagsterCmd)
     })
 
   const runDbtCommand = runCommand
@@ -115,12 +108,8 @@ export default async function runCli() {
     .argument('[string...]', 'DBT command to run')
     .allowUnknownOption()
     .action(async (dbtCmd) => {
-      // Must handle --version manually for subcommands (Commanderjs bug)
-      if (process.argv[4] === '--version') {
-        await $`poetry run dbt --version`
-      } else {
-        runDbt(dbtCmd)
-      }
+      await manuallyHandleVersion('poetry run dbt --version')
+      runDbt(dbtCmd)
     })
 
   const runTrinoCommand = runCommand.command('trino').description('Run Trino commands')
@@ -134,10 +123,19 @@ export default async function runCli() {
 
   const notebookCommand = program.command('notebook').description('Run notebook related commands')
 
+  const notebookNewCommand = notebookCommand
+    .command('new')
+    .description('Create a new notebook')
+    .argument('[string]', 'Name of the new notebook')
+    .option('-t, --template', 'Template to use for the new notebook')
+    .action((notebookPath) => {
+      createNotebook(notebookPath)
+    })
+
   const notebookExportCommand = notebookCommand
     .command('export')
-    .description('Export notebooks to HTML')
-    .argument('[string]', 'Service to view logs for')
+    .description('Export notebooks as python modules or dbt files')
+    .argument('[string]', 'Notebook to export')
     .action((notebookToExport) => {
       exportNotebooks(notebookToExport)
     })

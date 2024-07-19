@@ -37,6 +37,7 @@ import {
   SHARED_NETWORK_NAME,
   TRINO_CONTAINER_PORT,
   TRINO_HOST_PORT,
+  TRINO_USER,
   TRINO_VERSION,
 } from './constants'
 import dagsterMeltanoMeltanoPy from '@cli/templates/dagsterIcebergTrinoStack/dagster-meltano/meltano.py'
@@ -169,7 +170,7 @@ export const getDbtConfig = (projectName: string): DbtConfig => {
           outputs: {
             trino: {
               type: 'trino',
-              user: 'trino',
+              user: TRINO_USER,
               host: 'localhost',
               port: parseInt(TRINO_HOST_PORT),
               database: 'iceberg',
@@ -547,7 +548,7 @@ export const getJupyterlabConfig = (projectName: string): JupyterlabConfig => {
   return {
     id: 'jupyterlab',
     name: 'JupyterLab',
-    desc: 'An open-source web application for interactive computing.',
+    desc: 'An open-source application for literate programming.',
     init: async () => {
       // Create jupyterlab dir
       return await execShell(`mkdir -p jupyterlab/magics`)

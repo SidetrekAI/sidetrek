@@ -1,12 +1,12 @@
 import path from 'path'
 import { $ } from 'bun'
+import { getProjectName, getSidetrekHome } from '@cli/utils'
 
-// NOTE: cwd is the root project dir
-const cwd = process.cwd()
+const sidetrekHome = getSidetrekHome()
+const projectName = getProjectName()
 
 export default async function runDagster(dagsterCmd: string[]) {
-  const projectName = path.basename(cwd)
-  const dagsterProjectDir = `${cwd}/${projectName}/dagster/${projectName}`
+  const dagsterProjectDir = `${sidetrekHome}/${projectName}/dagster/${projectName}`
 
   // `dagsterCmd` includes the command (after `sidetrek run dagster`) and options
   const dagsterCmdStr = dagsterCmd.join(' ')

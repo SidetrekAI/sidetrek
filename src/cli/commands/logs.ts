@@ -3,8 +3,9 @@ import type { SidetrekConfigServices } from '@cli/types'
 import { $ } from 'bun'
 import * as R from 'ramda'
 import YAML from 'yaml'
+import { getProjectName, getSidetrekHome } from '@cli/utils'
 
-const cwd = process.cwd()
+const sidetrekHome = getSidetrekHome()
 
 export default async function logs(service: string | undefined, options: any) {
   const logCmdOptions = R.isEmpty(options)
@@ -61,7 +62,7 @@ const runLogsCommand = async (service: string, options: string) => {
     if (service === 'superset') {
       // Superset runs separately from the other services
       const cmd = `docker compose logs superset ${options}`
-      await $`${{ raw: cmd }}`.cwd(`${cwd}/superset`)
+      await $`${{ raw: cmd }}`.cwd(`${sidetrekHome}/superset`)
     } else {
       const cmd = `docker compose logs ${service} ${options}`
       await $`${{ raw: cmd }}`
