@@ -1,14 +1,64 @@
+import path from 'path'
+import fs from 'node:fs'
 import * as R from 'ramda'
 import { $ } from 'bun'
 import YAML from 'yaml'
 import ky from 'ky'
 import { v4 as uuidv4 } from 'uuid'
-import fs from 'node:fs'
 import chalk from 'chalk'
 import type { EnvFileObj, PromiseFactory, ShellResponse } from './types'
 import { colors, S_BAR, USERINFO_FILEPATH } from './constants'
 
-const cwd = process.cwd()
+const indexedMap = R.addIndex(R.map)
+
+/**
+ *
+ * CAUTION: Cannot be used during `sidetrek init` since during `init`, sidetrek.config.yaml is not yet created.
+ *
+ *    - During `init`, use cwd instead.
+ *    - For every other command, use this function instead of cwd since Jupyter Notebook has issues with cwd.
+ *
+ */
+interface GetSidetrekHomeOptions {
+  command?: string
+}
+
+export const getSidetrekHome = (options: GetSidetrekHomeOptions = {}): string => {
+  const { command } = options
+  if (command === 'init') return process.cwd()
+
+  // Keep moving up the parent dir until we find a directory that has sidetrek.config.yaml file
+  const cwd = process.cwd()
+
+  const isCwdProjectHome = fs.existsSync(`${cwd}/sidetrek.config.yaml`)
+  if (isCwdProjectHome) return cwd
+
+  const cwdArr = R.compose(R.reject(R.isEmpty), R.split('/'))(cwd) // /a/b/c -> ['a', 'b', 'c']
+  const cwdCumulativePaths = R.compose(
+    R.reverse, // reverse the array to traverse up the tree from cwd towards root dir) - ['/a/b', '/a']
+    indexedMap((_, i) => '/' + R.compose(R.join('/'), R.take(i + 1))(cwdArr)) as any, // ['/a', '/a/b']
+    R.init // remove the cwd itself - ['a', 'b']
+  )(cwdArr) as string[]
+
+  const projectHome = cwdCumulativePaths.find((dirpath) => fs.existsSync(`${dirpath}/sidetrek.config.yaml`))
+
+  if (!projectHome) {
+    // Could not find project home directory (i.e. containing sidetrek.config.yaml file) - defaulting to cwd
+    return cwd
+  }
+
+  return projectHome
+}
+
+/**
+ *
+ * CAUTION: Cannot be used during `sidetrek init` since during `init`, sidetrek.config.yaml is not yet created.
+ *
+ */
+export const getProjectName = (): string => {
+  const sidetrekHome = getSidetrekHome()
+  return path.basename(sidetrekHome)
+}
 
 export const getPackageVersion = async () => {
   const packageJson = await import('../../package.json')
@@ -197,24 +247,25 @@ export const createOrUpdateEnvFile = async (envFilePath: string, envFileObj: Env
   }
 }
 
-export const retrieveGeneratedUserId = async () => {
+export const retrieveGeneratedUserId = async (projectRootDirpath: string) => {
   // Check if the uuid exists in .sidetrek
-  const userinfoExists = await Bun.file(`${cwd}/${USERINFO_FILEPATH}`).exists()
+  const userInfoFilepath = `${projectRootDirpath}/${USERINFO_FILEPATH}`
+  const userinfoExists = await Bun.file(`${userInfoFilepath}`).exists()
 
   // If not, create it and store it
   if (!userinfoExists) {
     const generatedUserId = uuidv4()
-    await Bun.write(`${cwd}/${USERINFO_FILEPATH}`, JSON.stringify({ generatedUserId }))
+    await Bun.write(`${userInfoFilepath}`, JSON.stringify({ generatedUserId }))
     return generatedUserId
   }
 
   // If it exists, but doesn't have uuid in it
-  const userinfo = await Bun.file(`${cwd}/${USERINFO_FILEPATH}`).json()
+  const userinfo = await Bun.file(`${userInfoFilepath}`).json()
 
   if (!userinfo?.generatedUserId) {
     const generatedUserId = uuidv4()
     const updatedUserinfo = { ...userinfo, generatedUserId }
-    await Bun.write(`${cwd}/${USERINFO_FILEPATH}`, JSON.stringify(updatedUserinfo))
+    await Bun.write(`${userInfoFilepath}`, JSON.stringify(updatedUserinfo))
     return generatedUserId
   }
 
@@ -229,12 +280,11 @@ interface TrackingArgs {
 export const track = async (payload: TrackingArgs) => {
   // Track user actions
   const cliTrackingServerUrl =
-    process.env.CUSTOM_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
+    process.env.CUSTOM_ENV === 'development' ? 'http://localhost:3010/track' : 'https://cli-tracking.sidetrek.com/track'
 
   // Track os and arch
   let os = undefined
   let arch = undefined
-
   try {
     os = (await $`uname -s`.text()).replace('\n', '').toLowerCase()
     arch = (await $`uname -m`.text()).replace('\n', '').toLowerCase()
@@ -247,11 +297,18 @@ export const track = async (payload: TrackingArgs) => {
     return
   }
 
+  const cwd = process.cwd()
+  const projectRootDirpath =
+    payload.command === 'init'
+      ? `${cwd}/${payload.metadata?.projectName}`
+      : getSidetrekHome({ command: payload.command })
+  const generatedUserId = await retrieveGeneratedUserId(projectRootDirpath)
+
   try {
     const trackingRes = await ky
       .post(cliTrackingServerUrl, {
         json: {
-          generated_user_id: await retrieveGeneratedUserId(),
+          generated_user_id: generatedUserId,
           ...payload,
           metadata: {
             ...payload.metadata,
@@ -272,5 +329,12 @@ export const track = async (payload: TrackingArgs) => {
 
     // Silently return in case of tracking failure - we don't want it affecting cli functionality
     return
+  }
+}
+
+// Must handle --version manually for subcommands (Commanderjs bug)
+export const manuallyHandleVersion = async (cmd: string) => {
+  if (process.argv[4] === '--version') {
+    await $`${{ raw: cmd }}`
   }
 }

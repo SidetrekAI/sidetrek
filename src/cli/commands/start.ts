@@ -1,23 +1,28 @@
 import path from 'path'
 import { $ } from 'bun'
 import { getDagsterConfig, getSupersetConfig } from '../toolConfigs'
-
-// NOTE: cwd is the root project dir
-const cwd = process.cwd()
+import { getProjectName, getSidetrekHome, track } from '@cli/utils'
 
 export default async function start(options: any) {
+  const projectName = getProjectName()
+
   const { build = false, skip = [] } = options
 
-  const projectName = path.basename(cwd)
+  try {
+    // Run the core services
+    await $`docker compose up -d ${build ? '--build' : ''}`
 
-  // Run the core services
-  await $`docker compose up -d ${build ? '--build' : ''}`
+    // Run superset
+    const supersetConfig = getSupersetConfig(projectName)
+    await supersetConfig.run({ build })
 
-  // Run superset
-  const supersetConfig = getSupersetConfig(projectName)
-  await supersetConfig.run({ build })
-
-  // Run the dagster dev server
-  const dagsterConfig = getDagsterConfig(projectName)
-  await dagsterConfig.run()
+    // Run the dagster dev server
+    const dagsterConfig = getDagsterConfig(projectName)
+    await dagsterConfig.run()
+  } catch (err: any) {
+    await track({
+      command: 'start',
+      metadata: { error: JSON.stringify(err) },
+    })
+  }
 }

@@ -11,7 +11,7 @@
 Inside sidetrek-cli-tracking repo:
 
 - Run `docker compose up` to start the tracking DB
-- Run the dev server
+- Run the dev server: `bun run dev`
 - (Optional) Run the migration if required
 
 ## Release
