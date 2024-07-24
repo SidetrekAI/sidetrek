@@ -21,24 +21,31 @@ import {
   ICEBERG_PG_HOST_PORT,
   ICEBERG_REST_CONTAINER_PORT,
   ICEBERG_REST_HOST_PORT,
+  JUPYTERLAB_CONTAINER_PORT,
+  JUPYTERLAB_CONTAINER_VOLUME_PATH,
+  JUPYTERLAB_HOST_PORT,
+  JUPYTERLAB_TOKEN,
   LAKEHOUSE_NAME_ENVNAME,
   MELTANO_VERSION,
   MINIO_SERVER_CONTAINER_PORT,
   MINIO_SERVER_HOST_PORT,
   MINIO_UI_CONTAINER_PORT,
   MINIO_UI_HOST_PORT,
-  MINIO_VOLUME,
   MINIO_VOLUME_NAME,
   RAW_ICEBERG_TABLE_NAME,
   S3_ENDPOINT_ENVNAME,
   SHARED_NETWORK_NAME,
   TRINO_CONTAINER_PORT,
   TRINO_HOST_PORT,
+  TRINO_USER,
   TRINO_VERSION,
 } from './constants'
-import dagsterMeltanoMeltanoPy from './templates/dagsterIcebergTrinoStack/dagster-meltano/meltano.py'
-import dagsterDbtDbtAssetsPy from './templates/dagsterIcebergTrinoStack/dagster-dbt/dbt_assets.py'
-import dagsterDbtInitPy from './templates/dagsterIcebergTrinoStack/dagster-dbt/__init__.py'
+import dagsterMeltanoMeltanoPy from '@cli/templates/dagsterIcebergTrinoStack/dagster-meltano/meltano.py'
+import dagsterDbtDbtAssetsPy from '@cli/templates/dagsterIcebergTrinoStack/dagster-dbt/dbt_assets.py'
+import dagsterDbtInitPy from '@cli/templates/dagsterIcebergTrinoStack/dagster-dbt/__init__.py'
+import jupyterlabDockerfile from '@cli/templates/jupyterlabDockerfile'
+import jupyterlabMagicsPy from '@cli/templates/dagsterIcebergTrinoStack/jupyterlab/magics/magics.py'
+import jupyterlabDirectivesPy from '@cli/templates/dagsterIcebergTrinoStack/jupyterlab/nbdev_extensions/directives.py'
 
 const cwd = process.cwd()
 
@@ -56,6 +63,7 @@ export interface ToolConfig {
 
 type MinimalToolConfig = Omit<ToolConfig, 'install' | 'init' | 'postInit' | 'run' | 'ui'>
 
+// Dagster
 export interface DagsterConfig extends MinimalToolConfig {
   install: () => Promise<ShellResponse>
   init: () => Promise<ShellResponse>
@@ -64,53 +72,6 @@ export interface DagsterConfig extends MinimalToolConfig {
   ui: () => any
 }
 
-export interface MeltanoConfig extends MinimalToolConfig {
-  install: () => Promise<ShellResponse>
-  init: () => Promise<ShellResponse>
-  postInit: () => any
-}
-
-export interface DbtConfig extends MinimalToolConfig {
-  install: () => Promise<ShellResponse>
-  init: () => Promise<ShellResponse>
-  postInit: () => any
-}
-
-export interface MinioConfig extends MinimalToolConfig {
-  dockerComposeObj: any
-}
-
-export interface IcebergConfig extends MinimalToolConfig {
-  dockerComposeObj: any
-}
-
-export interface TrinoConfig extends MinimalToolConfig {
-  dockerComposeObj: any
-  postInit: () => any
-  shell: () => any
-}
-
-interface SupersetConfigRunOptions {
-  build?: boolean
-}
-
-export interface SupersetConfig extends MinimalToolConfig {
-  init: () => any
-  postInit: () => any
-  run: (options?: SupersetConfigRunOptions) => any
-}
-
-export interface DagsterMeltanoConfig extends MinimalToolConfig {
-  install: () => Promise<ShellResponse>
-  postInit: () => any
-}
-
-export interface DagsterDbtConfig extends MinimalToolConfig {
-  install: () => Promise<ShellResponse>
-  postInit: () => any
-}
-
-// Dagster
 export const getDagsterConfig = (projectName: string): DagsterConfig => {
   return {
     id: 'dagster',
@@ -146,6 +107,12 @@ export const getDagsterConfig = (projectName: string): DagsterConfig => {
 }
 
 // Meltano
+export interface MeltanoConfig extends MinimalToolConfig {
+  install: () => Promise<ShellResponse>
+  init: () => Promise<ShellResponse>
+  postInit: () => any
+}
+
 export const getMeltanoConfig = (projectName: string): MeltanoConfig => {
   return {
     id: 'meltano',
@@ -168,6 +135,12 @@ export const getMeltanoConfig = (projectName: string): MeltanoConfig => {
 }
 
 // DBT
+export interface DbtConfig extends MinimalToolConfig {
+  install: () => Promise<ShellResponse>
+  init: () => Promise<ShellResponse>
+  postInit: () => any
+}
+
 export const getDbtConfig = (projectName: string): DbtConfig => {
   return {
     id: 'dbt',
@@ -197,7 +170,7 @@ export const getDbtConfig = (projectName: string): DbtConfig => {
           outputs: {
             trino: {
               type: 'trino',
-              user: 'trino',
+              user: TRINO_USER,
               host: 'localhost',
               port: parseInt(TRINO_HOST_PORT),
               database: 'iceberg',
@@ -233,6 +206,10 @@ export const getDbtConfig = (projectName: string): DbtConfig => {
 }
 
 // Minio
+export interface MinioConfig extends MinimalToolConfig {
+  dockerComposeObj: any
+}
+
 export const getMinioConfig = (projectName: string): MinioConfig => {
   const dockerComposeObj = {
     minio: {
@@ -295,6 +272,10 @@ export const getMinioConfig = (projectName: string): MinioConfig => {
 }
 
 // Iceberg
+export interface IcebergConfig extends MinimalToolConfig {
+  dockerComposeObj: any
+}
+
 export const getIcebergConfig = (projectName: string): IcebergConfig => {
   const dockerComposeObj = {
     'iceberg-rest': {
@@ -349,6 +330,12 @@ export const getIcebergConfig = (projectName: string): IcebergConfig => {
 }
 
 // Trino
+export interface TrinoConfig extends MinimalToolConfig {
+  dockerComposeObj: any
+  postInit: () => any
+  shell: () => any
+}
+
 export const getTrinoConfig = (projectName: string): TrinoConfig => {
   const dockerComposeObj = {
     trino: {
@@ -432,6 +419,16 @@ export const getTrinoConfig = (projectName: string): TrinoConfig => {
 }
 
 // Superset
+interface SupersetConfigRunOptions {
+  build?: boolean
+}
+
+export interface SupersetConfig extends MinimalToolConfig {
+  init: () => any
+  postInit: () => any
+  run: (options?: SupersetConfigRunOptions) => any
+}
+
 export const getSupersetConfig = (projectName: string): SupersetConfig => {
   return {
     id: 'superset',
@@ -471,6 +468,11 @@ export const getSupersetConfig = (projectName: string): SupersetConfig => {
 }
 
 // dagster-meltano connector
+export interface DagsterMeltanoConfig extends MinimalToolConfig {
+  install: () => Promise<ShellResponse>
+  postInit: () => any
+}
+
 export const getDagsterMeltanoConfig = (projectName: string): DagsterMeltanoConfig => {
   return {
     id: 'dagster-meltano',
@@ -491,6 +493,11 @@ export const getDagsterMeltanoConfig = (projectName: string): DagsterMeltanoConf
 }
 
 // dagster-dbt connector
+export interface DagsterDbtConfig extends MinimalToolConfig {
+  install: () => Promise<ShellResponse>
+  postInit: () => any
+}
+
 export const getDagsterDbtConfig = (projectName: string): DagsterDbtConfig => {
   return {
     id: 'dagster-dbt',
@@ -511,5 +518,67 @@ export const getDagsterDbtConfig = (projectName: string): DagsterDbtConfig => {
         dagsterDbtInitPy
       )
     },
+  }
+}
+
+// Jupyterlab
+export interface JupyterlabConfig extends MinimalToolConfig {
+  init: () => Promise<ShellResponse>
+  install: () => Promise<ShellResponse>
+  postInit: () => any
+  dockerComposeObj: any
+}
+
+export const getJupyterlabConfig = (projectName: string): JupyterlabConfig => {
+  const dockerComposeObj = {
+    jupyterlab: {
+      container_name: 'jupyterlab',
+      build: {
+        context: '.',
+        dockerfile: 'Dockerfile.jupyterlab',
+      },
+      ports: [`${JUPYTERLAB_HOST_PORT}:${JUPYTERLAB_CONTAINER_PORT}`],
+      volumes: [`.:${JUPYTERLAB_CONTAINER_VOLUME_PATH}`],
+      command: `start-notebook.py --NotebookApp.token='${JUPYTERLAB_TOKEN}'`,
+      extra_hosts: ['host.docker.internal:host-gateway'],
+      networks: [SHARED_NETWORK_NAME],
+    },
+  }
+
+  return {
+    id: 'jupyterlab',
+    name: 'JupyterLab',
+    desc: 'An open-source application for literate programming.',
+    init: async () => {
+      // Create jupyterlab dir
+      return await execShell(`mkdir -p jupyterlab/magics`)
+    },
+    install: async () => {
+      return await execShell(`poetry add nbdev nbdev-extensions`, { cwd: `${cwd}/${projectName}` })
+    },
+    postInit: async () => {
+      // Add requirements.in (these are packages that are made available in the jupyterlab)
+      const packages = [
+        'poetry',
+        'nbdev',
+        'nbdev-extensions',
+        'dagster',
+        'dbt-core',
+        'dbt-trino',
+        'meltano',
+        'trino',
+        'duckdb',
+        'pandas',
+      ]
+
+      await Bun.write(`./${projectName}/jupyterlab/requirements.in`, packages.join('\n'))
+
+      // Add Dockerfile.jupyterlab
+      await Bun.write(`./${projectName}/Dockerfile.jupyterlab`, jupyterlabDockerfile)
+
+      // Add magics
+      await Bun.write(`./${projectName}/jupyterlab/magics/magics.py`, jupyterlabMagicsPy)
+    },
+    dockerComposeObj,
   }
 }

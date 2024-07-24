@@ -15,7 +15,13 @@ import {
   createOrUpdateEnvFile,
   track,
 } from '@cli/utils'
-import { getIcebergConfig, getMinioConfig, getSupersetConfig, getTrinoConfig } from '@cli/toolConfigs'
+import {
+  getIcebergConfig,
+  getJupyterlabConfig,
+  getMinioConfig,
+  getSupersetConfig,
+  getTrinoConfig,
+} from '@cli/toolConfigs'
 import {
   SHARED_NETWORK_NAME,
   MINIO_VOLUME,
@@ -29,7 +35,6 @@ import {
   ICEBERG_PG_CATALOG_PASSWORD_ENVNAME,
   ICEBERG_PG_CATALOG_DB_ENVNAME,
   PROJECT_DIRNAME_ENVNAME,
-  TRINO_USER_ENVNAME,
   ICEBERG_CATALOG_NAME_ENVNAME,
   S3_ENDPOINT,
   AWS_REGION,
@@ -49,6 +54,9 @@ import {
   SUPPORTED_PYTHON_VERSIONS_STR,
   USERINFO_FILEPATH,
   SIDETREK_CONFIG_FILENAME,
+  TRINO_USER,
+  TRINO_USER_ENVNAME,
+  TRINO_HOST_PORT_ENVNAME,
 } from '@cli/constants'
 import gitignore from '@cli/templates/gitignore'
 import { initTool } from '../../utils'
@@ -88,7 +96,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    *
    */
   const exitOnError = async (errorMessage: string, options: ExitOnErrorOptionsArgs = {}): Promise<void> => {
-    const { skipCleanup = false } = options
+    const { skipCleanup = true } = options
 
     if (!skipCleanup) {
       await cleanupOnFailure()
@@ -97,7 +105,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     // Track the error
     await track({
       command: 'init',
-      metadata: { error: errorMessage },
+      metadata: { projectName, error: errorMessage },
     })
 
     p.cancel(errorMessage)
@@ -197,7 +205,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   // Track the init command as soon as generated user id is created
   // NOTE: `sidetrek init` command cannot be tracked in the postAction hook since there's no generated user id yet
-  await track({ command: 'init', metadata: { started: true, cliInputs } })
+  await track({ command: 'init', metadata: { started: true, ...cliInputs } })
 
   if (poetryNewResp?.error) {
     const errorMessage = `Sorry, something went wrong while scaffolding the project via Poetry.\n\n${poetryNewResp.error?.stderr}`
@@ -276,6 +284,19 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     s.stop('Trino set up successfully.' + chalk.gray(` [${trinoInitDuration}ms]`))
   }
 
+  // Set up Jupyterlab
+  s.start('Setting up Jupyterlab (this may take a couple minutes)')
+  const jupyterlabInitStartTime = startStopwatch()
+  const jupyterlabInitResp = await initTool(projectName, 'jupyterlab')
+
+  if (jupyterlabInitResp?.error) {
+    const errorMessage = `Sorry, something went wrong while intializing Jupyterlab.\n\n${jupyterlabInitResp.error?.stderr}`
+    await exitOnError(errorMessage)
+  } else {
+    const jupyterlabInitDuration = endStopwatch(jupyterlabInitStartTime)
+    s.stop('Jupyterlab set up successfully.' + chalk.gray(` [${jupyterlabInitDuration}ms]`))
+  }
+
   // Set up Superset
   s.start('Setting up Superset (this may take a couple minutes)')
   const supersetInitStartTime = startStopwatch()
@@ -303,6 +324,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     getMinioConfig(projectName),
     getIcebergConfig(projectName),
     getTrinoConfig(projectName),
+    getJupyterlabConfig(projectName),
     getSupersetConfig(projectName),
   ]
   const dcNetworks = { [SHARED_NETWORK_NAME]: { driver: 'bridge' } }
@@ -348,6 +370,8 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     [ICEBERG_PG_CATALOG_USER_ENVNAME]: `iceberg`,
     [ICEBERG_PG_CATALOG_PASSWORD_ENVNAME]: `iceberg`,
     [ICEBERG_PG_CATALOG_DB_ENVNAME]: `iceberg`,
+    [TRINO_USER_ENVNAME]: TRINO_USER,
+    [TRINO_HOST_PORT_ENVNAME]: TRINO_HOST_PORT,
   }
   await createOrUpdateEnvFile(`./${projectName}/.env`, rootEnvFileObj)
 
@@ -356,7 +380,6 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // Create dagster .env file
   const dagsterEnvFileObj = {
     [PROJECT_DIRNAME_ENVNAME]: `${projectName}`,
-    [TRINO_USER_ENVNAME]: `admin`,
   }
   await createOrUpdateEnvFile(`./${projectName}/${projectName}/dagster/${projectName}/.env`, dagsterEnvFileObj)
 
@@ -631,5 +654,5 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    * Track success
    *
    */
-  await track({ command: 'init', metadata: { success: true, cliInputs, duration: totalDuration } })
+  await track({ command: 'init', metadata: { success: true, ...cliInputs, duration: totalDuration } })
 }

@@ -1,12 +1,12 @@
 import { $ } from 'bun'
-
-// NOTE: cwd is the root project dir
-const cwd = process.cwd()
+import { getProjectName, getSidetrekHome } from '@cli/utils'
 
 export default async function down() {
+  const sidetrekHome = getSidetrekHome()
+
   // Down the core services
   await $`docker compose down`
 
   // Down superset
-  await $`docker compose down`.cwd(`${cwd}/superset`)
+  await $`docker compose down`.cwd(`${sidetrekHome}/superset`)
 }

@@ -4,12 +4,10 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import chalk from 'chalk'
 import {
   SUPPORTED_DOCKER_VERSIONS_STR,
-  SUPPORTED_PYTHON_VERSIONS,
   SUPPORTED_PYTHON_VERSIONS_STR,
   colors,
-} from '../../constants'
-import { validateProjectName } from '../../validators'
-import { clackLog, endStopwatch, startStopwatch, track } from '../../utils'
+} from '@cli/constants'
+import { validateProjectName } from '@cli/validators'
 import { buildDagsterIcebergTrinoStack } from './stacks/dagsterIcebergTrinoStack'
 
 // NOTE: cwd is the PARENT of the root project dir (because it's not created yet before `init`)
@@ -117,7 +115,7 @@ export default async function init(options: any) {
 
         if (R.equals(dataStack, 'dagsterIcebergTrinoStack')) {
           // Build the data stack
-          await buildDagsterIcebergTrinoStack(results)
+          return await buildDagsterIcebergTrinoStack(results)
         }
       },
       outro: async ({ results }) => {
@@ -126,7 +124,8 @@ export default async function init(options: any) {
           colors.sidetrekLightPurple(
             '\n\n   (Next up - Check out the quickstart tutorial at https://docs.sidetrek.com)'
           )
-        return await p.outro(outroMessage)
+        await p.outro(outroMessage)
+        process.exit(0)
       },
     },
     {
