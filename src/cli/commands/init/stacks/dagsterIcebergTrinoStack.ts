@@ -15,7 +15,13 @@ import {
   createOrUpdateEnvFile,
   track,
 } from '@cli/utils'
-import { getIcebergConfig, getJupyterlabConfig, getMinioConfig, getSupersetConfig, getTrinoConfig } from '@cli/toolConfigs'
+import {
+  getIcebergConfig,
+  getJupyterlabConfig,
+  getMinioConfig,
+  getSupersetConfig,
+  getTrinoConfig,
+} from '@cli/toolConfigs'
 import {
   SHARED_NETWORK_NAME,
   MINIO_VOLUME,
@@ -90,7 +96,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    *
    */
   const exitOnError = async (errorMessage: string, options: ExitOnErrorOptionsArgs = {}): Promise<void> => {
-    const { skipCleanup = false } = options
+    const { skipCleanup = true } = options
 
     if (!skipCleanup) {
       await cleanupOnFailure()
@@ -99,7 +105,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     // Track the error
     await track({
       command: 'init',
-      metadata: { error: errorMessage },
+      metadata: { projectName, error: errorMessage },
     })
 
     p.cancel(errorMessage)

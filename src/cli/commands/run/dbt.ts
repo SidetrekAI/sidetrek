@@ -2,10 +2,10 @@ import path from 'path'
 import { $ } from 'bun'
 import { getProjectName, getSidetrekHome } from '@cli/utils'
 
-const sidetrekHome = getSidetrekHome()
-const projectName = getProjectName()
-
 export default async function runDbt(dbtCmd: string[]) {
+  const sidetrekHome = getSidetrekHome()
+  const projectName = getProjectName()
+
   const dbtProjectDir = `${sidetrekHome}/${projectName}/dbt/${projectName}`
 
   // `dbtCmd` includes the command (after `sidetrek run dbt`) and options

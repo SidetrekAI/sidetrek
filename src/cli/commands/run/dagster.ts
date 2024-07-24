@@ -2,10 +2,10 @@ import path from 'path'
 import { $ } from 'bun'
 import { getProjectName, getSidetrekHome } from '@cli/utils'
 
-const sidetrekHome = getSidetrekHome()
-const projectName = getProjectName()
-
 export default async function runDagster(dagsterCmd: string[]) {
+  const sidetrekHome = getSidetrekHome()
+  const projectName = getProjectName()
+
   const dagsterProjectDir = `${sidetrekHome}/${projectName}/dagster/${projectName}`
 
   // `dagsterCmd` includes the command (after `sidetrek run dagster`) and options

@@ -1,6 +1,6 @@
 const pyContent = `import argparse
 from glob import glob
-from sidetrek.nvdev.export import nb_export_dbt
+from sidetrek.nbdev.export import nb_export_dbt
 from nbdev.export import nb_export
 
 

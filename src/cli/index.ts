@@ -121,24 +121,22 @@ export default async function runCli() {
       runTrinoShell()
     })
 
-  const notebookCommand = program.command('notebook').description('Run notebook related commands')
+  // const notebookCommand = program.command('notebook').description('Run notebook related commands')
 
-  const notebookNewCommand = notebookCommand
-    .command('new')
-    .description('Create a new notebook')
-    .argument('[string]', 'Name of the new notebook')
-    .option('-t, --template', 'Template to use for the new notebook')
-    .action((notebookPath) => {
-      createNotebook(notebookPath)
-    })
+  // const notebookNewCommand = notebookCommand
+  //   .command('new')
+  //   .description('Create a new notebook')
+  //   .action(() => {
+  //     createNotebook()
+  //   })
 
-  const notebookExportCommand = notebookCommand
-    .command('export')
-    .description('Export notebooks as python modules or dbt files')
-    .argument('[string]', 'Notebook to export')
-    .action((notebookToExport) => {
-      exportNotebooks(notebookToExport)
-    })
+  // const notebookExportCommand = notebookCommand
+  //   .command('export')
+  //   .description('Export notebooks as python modules or dbt files')
+  //   .argument('[string]', 'Notebook to export')
+  //   .action((notebookToExport) => {
+  //     exportNotebooks(notebookToExport)
+  //   })
 
   // Track every command
   program.hook('postAction', async (thisCommand, actionCommand) => {

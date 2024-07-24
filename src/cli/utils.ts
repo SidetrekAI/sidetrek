@@ -19,7 +19,14 @@ const indexedMap = R.addIndex(R.map)
  *    - For every other command, use this function instead of cwd since Jupyter Notebook has issues with cwd.
  *
  */
-export const getSidetrekHome = (): string => {
+interface GetSidetrekHomeOptions {
+  command?: string
+}
+
+export const getSidetrekHome = (options: GetSidetrekHomeOptions = {}): string => {
+  const { command } = options
+  if (command === 'init') return process.cwd()
+
   // Keep moving up the parent dir until we find a directory that has sidetrek.config.yaml file
   const cwd = process.cwd()
 
@@ -35,7 +42,10 @@ export const getSidetrekHome = (): string => {
 
   const projectHome = cwdCumulativePaths.find((dirpath) => fs.existsSync(`${dirpath}/sidetrek.config.yaml`))
 
-  if (!projectHome) throw new Error('Could not find project home directory (i.e. containing sidetrek.config.yaml file)')
+  if (!projectHome) {
+    // Could not find project home directory (i.e. containing sidetrek.config.yaml file) - defaulting to cwd
+    return cwd
+  }
 
   return projectHome
 }
@@ -270,7 +280,7 @@ interface TrackingArgs {
 export const track = async (payload: TrackingArgs) => {
   // Track user actions
   const cliTrackingServerUrl =
-    process.env.CUSTOM_ENV === 'development' ? 'http://localhost:3000/track' : 'https://cli-tracking.sidetrek.com/track'
+    process.env.CUSTOM_ENV === 'development' ? 'http://localhost:3010/track' : 'https://cli-tracking.sidetrek.com/track'
 
   // Track os and arch
   let os = undefined
@@ -288,7 +298,10 @@ export const track = async (payload: TrackingArgs) => {
   }
 
   const cwd = process.cwd()
-  const projectRootDirpath = payload.command === 'init' ? `${cwd}/${payload.metadata?.projectName}` : getSidetrekHome()
+  const projectRootDirpath =
+    payload.command === 'init'
+      ? `${cwd}/${payload.metadata?.projectName}`
+      : getSidetrekHome({ command: payload.command })
   const generatedUserId = await retrieveGeneratedUserId(projectRootDirpath)
 
   try {

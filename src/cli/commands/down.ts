@@ -1,9 +1,9 @@
 import { $ } from 'bun'
 import { getProjectName, getSidetrekHome } from '@cli/utils'
 
-const sidetrekHome = getSidetrekHome()
-
 export default async function down() {
+  const sidetrekHome = getSidetrekHome()
+
   // Down the core services
   await $`docker compose down`
 

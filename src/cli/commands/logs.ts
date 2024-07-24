@@ -5,8 +5,6 @@ import * as R from 'ramda'
 import YAML from 'yaml'
 import { getProjectName, getSidetrekHome } from '@cli/utils'
 
-const sidetrekHome = getSidetrekHome()
-
 export default async function logs(service: string | undefined, options: any) {
   const logCmdOptions = R.isEmpty(options)
     ? ''
@@ -58,6 +56,8 @@ export default async function logs(service: string | undefined, options: any) {
 }
 
 const runLogsCommand = async (service: string, options: string) => {
+  const sidetrekHome = getSidetrekHome()
+
   try {
     if (service === 'superset') {
       // Superset runs separately from the other services
