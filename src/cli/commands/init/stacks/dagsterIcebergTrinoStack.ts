@@ -77,7 +77,7 @@ import martsPaymentSql from '@cli/templates/dagsterIcebergTrinoStack/example/dbt
 import type { SidetrekConfig } from '@cli/types'
 
 interface ExitOnErrorOptionsArgs {
-  skipCleanup?: boolean
+  cleanupOnFailure?: boolean
 }
 
 const s = p.spinner()
@@ -96,10 +96,10 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
    *
    */
   const exitOnError = async (errorMessage: string, options: ExitOnErrorOptionsArgs = {}): Promise<void> => {
-    const { skipCleanup = true } = options
+    const { cleanupOnFailure = false } = options
 
-    if (!skipCleanup) {
-      await cleanupOnFailure()
+    if (cleanupOnFailure) {
+      await cleanup()
     }
 
     // Track the error
@@ -112,7 +112,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     return process.exit(0)
   }
 
-  const cleanupOnFailure = async (): Promise<void> => {
+  const cleanup = async (): Promise<void> => {
     await $`rm -rf ${projectName}`.quiet()
   }
 
@@ -125,7 +125,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   // const userPythonVersionResp = await $`python --version`.text()
   // if (!userPythonVersionResp.includes('Python ')) {
   //   const errorMessage = `Python is not installed. Please install Python ${SUPPORTED_PYTHON_VERSIONS_STR} and try again.`
-  //   await exitOnError(errorMessage, { skipCleanup: true })
+  //   await exitOnError(errorMessage)
   // }
 
   // const userPythonVersion = userPythonVersionResp.split('Python ')[1]
@@ -133,7 +133,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   // if (!isSupportedPythonVersion) {
   //   const errorMessage = `Python version ${userPythonVersion} is not supported. Please install Python ${SUPPORTED_PYTHON_VERSIONS_STR} and try again.`
-  //   await exitOnError(errorMessage, { skipCleanup: true })
+  //   await exitOnError(errorMessage)
   // }
 
   /**
@@ -146,7 +146,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
 
   if (projectDirExists) {
     const errorMessage = `The directory ${projectName} already exists. Please choose a different project name.`
-    await exitOnError(errorMessage, { skipCleanup: true })
+    await exitOnError(errorMessage)
   }
 
   // `poetry new` -> remove tests -> create sidetrek dir -> add sidetrek.config.yaml to project root
@@ -225,12 +225,24 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   const poetryNewDuration = endStopwatch(poetryNewStartTime)
   s.stop('Project successfully scaffolded.' + chalk.gray(` [${poetryNewDuration}ms]`))
 
+  // Install Sidetrek python client
+  s.start('Installing Sidetrek python client (this may take a couple minutes)')
+  const sidetrekPythonInitStartTime = startStopwatch()
+  const sidetrekPythonInitResp = await execShell(`cd ${projectName} && poetry add sidetrek`)
+
+  if (sidetrekPythonInitResp?.error) {
+    const errorMessage = `Sorry, something went wrong while installing Sidetrek python client.\n\n${sidetrekPythonInitResp.error?.stderr}`
+    await exitOnError(errorMessage)
+  } else {
+    const sidetrekPythonInitDuration = endStopwatch(sidetrekPythonInitStartTime)
+    s.stop('Sidetrek python client installed successfully.' + chalk.gray(` [${sidetrekPythonInitDuration}ms]`))
+  }
+
   /**
    *
    * Initialize each tool in the data stack in parallel
    *
    */
-
   // Set up Dagster
   s.start('Setting up Dagster (this may take a couple minutes)')
   const dagsterInitStartTime = startStopwatch()
@@ -258,7 +270,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
   }
 
   // Set up Meltano
-  // IMPORTANT: Meltano must be set up BEFORE DBT for now due to snowplow tracker bug
+  // IMPORTANT: Meltano must be set up AFTER DBT for now due to snowplow tracker bug
   s.start('Setting up Meltano (this may take a couple minutes)')
   const meltanoInitStartTime = startStopwatch()
   const meltanoInitResp = await initTool(projectName, 'meltano')
@@ -284,18 +296,18 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     s.stop('Trino set up successfully.' + chalk.gray(` [${trinoInitDuration}ms]`))
   }
 
-  // Set up Jupyterlab
-  s.start('Setting up Jupyterlab (this may take a couple minutes)')
-  const jupyterlabInitStartTime = startStopwatch()
-  const jupyterlabInitResp = await initTool(projectName, 'jupyterlab')
+  // // Set up Jupyterlab
+  // s.start('Setting up Jupyterlab (this may take a couple minutes)')
+  // const jupyterlabInitStartTime = startStopwatch()
+  // const jupyterlabInitResp = await initTool(projectName, 'jupyterlab')
 
-  if (jupyterlabInitResp?.error) {
-    const errorMessage = `Sorry, something went wrong while intializing Jupyterlab.\n\n${jupyterlabInitResp.error?.stderr}`
-    await exitOnError(errorMessage)
-  } else {
-    const jupyterlabInitDuration = endStopwatch(jupyterlabInitStartTime)
-    s.stop('Jupyterlab set up successfully.' + chalk.gray(` [${jupyterlabInitDuration}ms]`))
-  }
+  // if (jupyterlabInitResp?.error) {
+  //   const errorMessage = `Sorry, something went wrong while intializing Jupyterlab.\n\n${jupyterlabInitResp.error?.stderr}`
+  //   await exitOnError(errorMessage)
+  // } else {
+  //   const jupyterlabInitDuration = endStopwatch(jupyterlabInitStartTime)
+  //   s.stop('Jupyterlab set up successfully.' + chalk.gray(` [${jupyterlabInitDuration}ms]`))
+  // }
 
   // Set up Superset
   s.start('Setting up Superset (this may take a couple minutes)')
@@ -324,7 +336,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     getMinioConfig(projectName),
     getIcebergConfig(projectName),
     getTrinoConfig(projectName),
-    getJupyterlabConfig(projectName),
+    // getJupyterlabConfig(projectName),
     getSupersetConfig(projectName),
   ]
   const dcNetworks = { [SHARED_NETWORK_NAME]: { driver: 'bridge' } }

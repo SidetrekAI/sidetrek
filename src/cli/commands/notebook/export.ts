@@ -31,7 +31,7 @@ export default async function exportNotebooks(notebookToExport: string) {
           await Bun.write(tempScriptFilepath, exportNbsPyModule)
 
           const optionNotebook = notebookToExport.toLowerCase() === 'all' ? '' : `--notebook ${notebookToExport}`
-          const cmd = `poetry run python3 ${tempScriptFilepath} ${optionNotebook}`
+          const cmd = `poetry run python3 ${tempScriptFilepath} --rootdir ${sidetrekHome} ${optionNotebook}`
           // await execShell(cmd, { cwd: sidetrekHome })
           await $`${{ raw: cmd }}`.cwd(sidetrekHome)
         } catch (err) {
