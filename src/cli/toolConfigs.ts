@@ -559,6 +559,7 @@ export const getJupyterlabConfig = (projectName: string): JupyterlabConfig => {
     postInit: async () => {
       // Add requirements.in (these are packages that are made available in the jupyterlab)
       const packages = [
+        'sidetrek',
         'poetry',
         'nbdev',
         'nbdev-extensions',
