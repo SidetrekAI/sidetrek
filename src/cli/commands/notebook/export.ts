@@ -1,3 +1,5 @@
+import path from 'path'
+import fs from 'node:fs'
 import { $ } from 'bun'
 import * as p from '@clack/prompts'
 import { execShell, getProjectName, getSidetrekHome } from '@cli/utils'
@@ -5,12 +7,14 @@ import exportNbsPyModule from '@cli/templates/dagsterIcebergTrinoStack/jupyterla
 import { colors } from '@cli/constants'
 
 export default async function exportNotebooks(notebookToExport: string) {
+  const cwd = process.cwd()
   const sidetrekHome = getSidetrekHome()
   const projectName = getProjectName()
 
   console.log('\n')
   const s = p.spinner()
 
+  let exportedNotebookPaths: any = undefined
   await p.group(
     {
       intro: () => p.intro(colors.sidetrekPurple(`Let's create a new notebook`)),
@@ -24,6 +28,11 @@ export default async function exportNotebooks(notebookToExport: string) {
       export: async ({ results }) => {
         const notebookToExport = results.notebookPath as string
 
+        if (notebookToExport !== 'all' && !fs.existsSync(path.resolve(cwd, notebookToExport))) {
+          p.cancel(`Notebook not found: ${notebookToExport}`)
+          process.exit(0)
+        }
+
         s.start('Exporting notebook(s)...')
         try {
           // Create a temporary script in .sidetrek/scripts
@@ -32,8 +41,8 @@ export default async function exportNotebooks(notebookToExport: string) {
 
           const optionNotebook = notebookToExport.toLowerCase() === 'all' ? '' : `--notebook ${notebookToExport}`
           const cmd = `poetry run python3 ${tempScriptFilepath} --rootdir ${sidetrekHome} ${optionNotebook}`
-          // await execShell(cmd, { cwd: sidetrekHome })
-          await $`${{ raw: cmd }}`.cwd(sidetrekHome)
+          const exportedNotebookPathsStr = await $`${{ raw: cmd }}`.cwd(sidetrekHome).text()
+          exportedNotebookPaths = exportedNotebookPathsStr.split(',')
         } catch (err) {
           p.cancel(JSON.stringify(err))
           process.exit(0)
@@ -41,9 +50,10 @@ export default async function exportNotebooks(notebookToExport: string) {
         s.stop('Notebook(s) successfully exported')
       },
       outro: async ({ results }) => {
-        const exportedNotebook = results.notebookPath as string
         const outroMessage = colors.sidetrekPurple(
-          `Notebook(s) exported${exportedNotebook.toLowerCase() === 'all' ? '' : ' - ' + exportedNotebook}`
+          'The following notebook(s) were exported:' +
+            '\n' +
+            exportedNotebookPaths.map((_path: string) => `   - ${_path.replace(sidetrekHome, '')}`).join('\n')
         )
         await p.outro(outroMessage)
         process.exit(0)
