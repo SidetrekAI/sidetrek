@@ -47,7 +47,7 @@ export default async function runCli() {
     .command('start')
     .description('Start the development services')
     .option('--build', 'Re-build the docker containers')
-    .option('--skip <value...>', 'Skip a specific service')
+    // .option('--skip <value...>', 'Skip a specific service')
     .action((options) => {
       start(options)
     })
@@ -121,22 +121,22 @@ export default async function runCli() {
       runTrinoShell()
     })
 
-  // const notebookCommand = program.command('notebook').description('Run notebook related commands')
+  const notebookCommand = program.command('notebook').description('Run notebook related commands')
 
-  // const notebookNewCommand = notebookCommand
-  //   .command('new')
-  //   .description('Create a new notebook')
-  //   .action(() => {
-  //     createNotebook()
-  //   })
+  const notebookNewCommand = notebookCommand
+    .command('new')
+    .description('Create a new notebook')
+    .action(() => {
+      createNotebook()
+    })
 
-  // const notebookExportCommand = notebookCommand
-  //   .command('export')
-  //   .description('Export notebooks as python modules or dbt files')
-  //   .argument('[string]', 'Notebook to export')
-  //   .action((notebookToExport) => {
-  //     exportNotebooks(notebookToExport)
-  //   })
+  const notebookExportCommand = notebookCommand
+    .command('export')
+    .description('Export notebooks as python modules or dbt files')
+    .argument('[string]', 'Notebook to export')
+    .action((notebookToExport) => {
+      exportNotebooks(notebookToExport)
+    })
 
   // Track every command
   program.hook('postAction', async (thisCommand, actionCommand) => {
