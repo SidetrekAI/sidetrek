@@ -296,18 +296,18 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     s.stop('Trino set up successfully.' + chalk.gray(` [${trinoInitDuration}ms]`))
   }
 
-  // // Set up Jupyterlab
-  // s.start('Setting up Jupyterlab (this may take a couple minutes)')
-  // const jupyterlabInitStartTime = startStopwatch()
-  // const jupyterlabInitResp = await initTool(projectName, 'jupyterlab')
+  // Set up Jupyterlab
+  s.start('Setting up Jupyterlab (this may take a couple minutes)')
+  const jupyterlabInitStartTime = startStopwatch()
+  const jupyterlabInitResp = await initTool(projectName, 'jupyterlab')
 
-  // if (jupyterlabInitResp?.error) {
-  //   const errorMessage = `Sorry, something went wrong while intializing Jupyterlab.\n\n${jupyterlabInitResp.error?.stderr}`
-  //   await exitOnError(errorMessage)
-  // } else {
-  //   const jupyterlabInitDuration = endStopwatch(jupyterlabInitStartTime)
-  //   s.stop('Jupyterlab set up successfully.' + chalk.gray(` [${jupyterlabInitDuration}ms]`))
-  // }
+  if (jupyterlabInitResp?.error) {
+    const errorMessage = `Sorry, something went wrong while intializing Jupyterlab.\n\n${jupyterlabInitResp.error?.stderr}`
+    await exitOnError(errorMessage)
+  } else {
+    const jupyterlabInitDuration = endStopwatch(jupyterlabInitStartTime)
+    s.stop('Jupyterlab set up successfully.' + chalk.gray(` [${jupyterlabInitDuration}ms]`))
+  }
 
   // Set up Superset
   s.start('Setting up Superset (this may take a couple minutes)')
@@ -336,7 +336,7 @@ export const buildDagsterIcebergTrinoStack = async (cliInputs: any): Promise<voi
     getMinioConfig(projectName),
     getIcebergConfig(projectName),
     getTrinoConfig(projectName),
-    // getJupyterlabConfig(projectName),
+    getJupyterlabConfig(projectName),
     getSupersetConfig(projectName),
   ]
   const dcNetworks = { [SHARED_NETWORK_NAME]: { driver: 'bridge' } }
