@@ -23,12 +23,12 @@ export const S_BAR = s('│', '|')
 
 export const DAGSTER_HOST_PORT = '3000'
 export const DAGSTER_CONTAINER_PORT = '3000'
-export const DAGSTER_VERSION = '^1.6.3'
+export const DAGSTER_VERSION = '~1.8.8'
 export const MELTANO_VERSION = '^3.4.2'
-export const DBT_CORE_VERSION = '^1.8.4'
+export const DBT_CORE_VERSION = '~1.8.6'
 export const DBT_TRINO_VERSION = '^1.8.1'
 export const DAGSTER_MELTANO_VERSION = '^1.5.4'
-export const DAGSTER_DBT_VERSION = '^0.23.4'
+export const DAGSTER_DBT_VERSION = '~0.24.8'
 
 export const SHARED_NETWORK_NAME = 'shared_network'
 export const MINIO_SERVER_HOST_PORT = '9000'
