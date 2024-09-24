@@ -551,7 +551,7 @@ export const getJupyterlabConfig = (projectName: string): JupyterlabConfig => {
     desc: 'An open-source application for literate programming.',
     init: async () => {
       // Create jupyterlab dir
-      return await execShell(`mkdir -p jupyterlab/magics`)
+      return await execShell(`mkdir -p jupyterlab/magics`, { cwd: `${cwd}/${projectName}` })
     },
     install: async () => {
       return await execShell(`poetry add nbdev nbdev-extensions`, { cwd: `${cwd}/${projectName}` })
